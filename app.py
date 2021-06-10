@@ -11,6 +11,8 @@ from scipy import fft
 
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 #Main Window Class
 class ImageProcessingWindow(QDialog, MainUI):
     def __init__(self, parent=None):
@@ -19,36 +21,39 @@ class ImageProcessingWindow(QDialog, MainUI):
         #Getting controls from the gui.py file
         self.setupGUI(self)
         self.setLayout(self.mainLayout)
+        
+        fileName = "images/403px-Android_robot.png"
+        Variables.currImage = Image.open(fileName).convert('RGB')
+        Variables.modifiedImage = Image.open(fileName).convert('RGB')
+        self.loadImages()
 
     def imageToQImage(self, pilImage):
         qImage = ImageQt.ImageQt(pilImage)
-        #qImage = QtGui.QPixmap.fromImage(qim)
-
-        #imageBytes = pilImage.convert("RGB").tobytes("raw","RGB")
-        #qImage = QImage(imageBytes, pilImage.size[0], pilImage.size[1], QtGui.QImage.Format_RGB888)
         return qImage
 
-    def get_fft_shift(self, im):
+    def get_fft(self, image_to_process):
+        array = np.array(image_to_process)
+        if(len(array.shape) == 3): # RGB
+            im = np.mean(array, axis=2) / 255
+        else: # Gray
+            im = array
+
         im_fft = fft.fft2((im).astype(float))
         return fft.fftshift( im_fft )
 
     def loadImages(self):
         #Converting image to qImage and showing it in the image control
         qImage = self.imageToQImage(Variables.currImage)
-        self.labelOriginalImage.setPixmap(QPixmap.fromImage(qImage).scaled(Variables.image_size, Variables.image_size))
+        self.labelOriginalImage.setPixmap(QPixmap.fromImage(qImage).scaledToHeight(Variables.image_size))
         self.labelOriginalImage.setScaledContents(True)
         
         qImage = self.imageToQImage(Variables.modifiedImage)
-        self.labelModifiedImage.setPixmap(QPixmap.fromImage(qImage).scaled(Variables.image_size, Variables.image_size))
+        self.labelModifiedImage.setPixmap(QPixmap.fromImage(qImage).scaledToHeight(Variables.image_size))
         self.labelModifiedImage.setScaledContents(True)        
         
-        im = np.mean(np.asarray(Variables.currImage), axis=2) / 255
-        im_fft_shift = self.get_fft_shift(im)
-        self.originalPlotImage.setImage((20*np.log10( 0.1 + im_fft_shift)).astype(int))
+        self.originalPlotImage.setImage(self.get_fft(Variables.currImage))
+        self.modifiedPlotImage.setImage(self.get_fft(Variables.modifiedImage))
 
-        im_m = np.mean(np.asarray(Variables.modifiedImage), axis=2) / 255
-        im_fft_shift_m = self.get_fft_shift(im_m)
-        self.modifiedPlotImage.setImage((20*np.log10( 0.1 + im_fft_shift_m)).astype(int))
 
     def getImageFile(self):
         fileName, _ = QFileDialog.getOpenFileName(self, 'Open File', QDir.rootPath() , '*.png *.jpg *.jpeg')
@@ -59,26 +64,33 @@ class ImageProcessingWindow(QDialog, MainUI):
             self.styleTextBoxPath.setText(fileName)
             
             #Reading into an image object and showing it in the image control
-            Variables.currImage = Image.open(fileName)
-            Variables.modifiedImage = Image.open(fileName)
+            Variables.currImage = Image.open(fileName).convert('RGB')
+            Variables.modifiedImage = Image.open(fileName).convert('RGB')
 
             self.loadImages()
             
     
     def toGray(self):
-        #Convert current image to grayscale
         Variables.modifiedImage = Variables.modifiedImage.convert('L')
-        
-        #set image control to the converted image
         self.loadImages()
 
     def toPeriodic(self):
-        im = np.mean(np.asarray(Variables.modifiedImage), axis=2) / 255
-        im_noisy = np.copy(im)
-        for n in range(im.shape[1]):
-            im_noisy[:, n] += np.cos(0.1*np.pi*n)
+        self.toGray()
+        array = np.array(Variables.modifiedImage)
+        assert(len(array.shape) == 2)
+        im = array
 
-        Variables.modifiedImage = Image.fromarray(np.uint8(im_noisy)).convert('RGB')
+        im_noisy = np.copy(im)
+        for i in range(im.shape[0]):
+            for j in range(im.shape[1]):
+                im_noisy[i, j] += np.cos(0.1*np.pi*j)
+
+        Variables.modifiedImage = Image.fromarray(np.uint8(im_noisy))
+        
+        #Variables.modifiedImage = Variables.modifiedImage.convert('RGB')
+
+        aaaa = Variables.currImage
+        bbbb = Variables.modifiedImage
         
         #set image control to the converted image
         self.loadImages()

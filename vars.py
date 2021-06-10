@@ -6,6 +6,6 @@ class Variables():
     mode = 'RGB'
     size = (100, 100)
     color = (255, 255, 255)
-    image_size = 240
+    image_size = 320
     currImage = Image.new(mode, size, color)
     modifiedImage = Image.new(mode, size, color)
