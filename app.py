@@ -56,12 +56,7 @@ class ImageProcessingWindow(QDialog, MainUI):
             self.toOriginal()
             
     def toPeriodic(self):
-        im = np.mean(np.asarray(Variables.modifiedImage), axis=2) / 255
-        im_noisy = np.copy(im)
-        for n in range(im.shape[1]):
-            im_noisy[:, n] += np.cos(0.1*np.pi*n)
-
-        Variables.modifiedImage = Image.fromarray(np.uint8(im_noisy)).convert('RGB')
+        Variables.periodic_noise(Variables.currImage)
 
         #set image control to the converted image
         self.loadImages()
