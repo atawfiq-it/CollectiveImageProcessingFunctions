@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-from vars import Variables
+from backend import Backend
 from PIL import Image, ImageQt
 import matplotlib.pyplot as plt
 
@@ -25,20 +25,20 @@ class ImageProcessingWindow(QDialog, MainUI):
 
     def loadImages(self):
         #Converting image to qImage and showing it in the image control
-        qImage1 = Variables.imageToQImage(Variables.currImage)
-        self.labelOriginalImage.setPixmap(QPixmap.fromImage(qImage1).scaled(Variables.image_size, Variables.image_size))
+        qImage1 = Backend.imageToQImage(Backend.currImage)
+        self.labelOriginalImage.setPixmap(QPixmap.fromImage(qImage1).scaled(Backend.image_size, Backend.image_size))
         self.labelOriginalImage.setScaledContents(True)
 
-        qImage2 = Variables.imageToQImage(Variables.modifiedImage)
-        self.labelModifiedImage.setPixmap(QPixmap.fromImage(qImage2).scaled(Variables.image_size, Variables.image_size))
+        qImage2 = Backend.imageToQImage(Backend.modifiedImage)
+        self.labelModifiedImage.setPixmap(QPixmap.fromImage(qImage2).scaled(Backend.image_size, Backend.image_size))
         self.labelModifiedImage.setScaledContents(True)
 
-        im_orig = np.mean(np.asarray(Variables.currImage), axis=2) / 255
-        im_fft_shift = Variables.get_fft_shift(im_orig)
+        im_orig = np.mean(np.asarray(Backend.currImage), axis=2) / 255
+        im_fft_shift = Backend.get_fft_shift(im_orig)
         self.originalPlotImage.setImage((20*np.log10( 0.1 + im_fft_shift)).astype(int))
 
-        im_modified = np.mean(np.asarray(Variables.modifiedImage), axis=2) / 255
-        im_fft_shift_m = Variables.get_fft_shift(im_modified)
+        im_modified = np.mean(np.asarray(Backend.modifiedImage), axis=2) / 255
+        im_fft_shift_m = Backend.get_fft_shift(im_modified)
         self.modifiedPlotImage.setImage((20*np.log10( 0.1 + im_fft_shift_m)).astype(int))
 
         
@@ -52,17 +52,17 @@ class ImageProcessingWindow(QDialog, MainUI):
             self.styleTextBoxPath.setText(fileName)
             
             #Reading into an image object and showing it in the image control
-            Variables.currImage = Image.open(fileName)
+            Backend.currImage = Image.open(fileName)
             self.toOriginal()
             
     def toPeriodic(self):
-        Variables.periodic_noise(Variables.currImage)
+        Backend.periodic_noise(Backend.currImage)
 
         #set image control to the converted image
         self.loadImages()
 
     def toOriginal(self):
-        Variables.modifiedImage = Variables.currImage.copy()
+        Backend.modifiedImage = Backend.currImage.copy()
         self.loadImages()
 
     
@@ -70,7 +70,7 @@ class ImageProcessingWindow(QDialog, MainUI):
 
     def toGray(self):
         #call gray transformation method
-        Variables.transformToGray(Variables)
+        Backend.transformToGray(Backend)
         
         #set image control to the converted image
         self.loadImages()
@@ -80,27 +80,130 @@ class ImageProcessingWindow(QDialog, MainUI):
 
     def getHist(self):
         #call gray transformation method
-        Variables.transformToGray(Variables)
+        Backend.transformToGray(Backend)
 
-        grayArray = np.array(Variables.imgToGray(Variables.currImage))
+        grayArray = np.array(Backend.imgToGray(Backend.currImage))
         #Create the histogram from gray image
         plt.hist(grayArray.ravel(), bins=100)
         plt.show()
-        #Variables.histImage = Image.fromarray(histNPArray)
+        #Backend.histImage = Image.fromarray(histNPArray)
 
     def addSaltAndPepper(self):
-        Variables.modifiedImage = Variables.add_sp_noise(Variables.currImage)
+        Backend.modifiedImage = Backend.add_sp_noise(Backend.currImage)
         self.loadImages()
 
     def fixSaltAndPepper(self):
-        Variables.modifiedImage = Variables.fix_sp_noise(Variables.currImage)
+        Backend.modifiedImage = Backend.fix_sp_noise(Backend.currImage)
         self.loadImages()
 
     def showFourier(self):
-        Variables.fourierTransform(Variables.currImage)
+        Backend.fourierTransform(Backend.currImage)
 
     def showEquHistogram(self):
-        Variables.equalizedHistogram(Variables.currImage)
+        Backend.equalizedHistogram(Backend.currImage)
+
+    def showLoG(self):
+        plt.subplot(131)
+        plt.title("loG 3x3")
+        plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=3),cmap="gray")
+        plt.axis("off")
+        plt.subplot(132)
+        plt.title("loG 5x5")
+        plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=5),cmap="gray")
+        plt.axis("off")
+        plt.subplot(133)
+
+        plt.title("loG 7x7")
+        plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=17),cmap="gray")
+        plt.axis("off")
+        plt.show()
+
+    def showLaplace(self):
+        plt.subplot(141)
+        plt.title("thresh =10")
+
+        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=10),cmap="gray")
+        plt.axis("off")
+
+        plt.subplot(142)
+
+        plt.title("thresh =127")
+
+        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=127),cmap="gray")
+        plt.axis("off")
+
+        plt.subplot(143)
+
+        plt.title("thresh =200")
+
+        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=200),cmap="gray")
+        plt.axis("off")
+        plt.subplot(144)
+
+        plt.title("defualt")
+
+        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields"),cmap="gray")
+        plt.axis("off")
+
+        plt.show()
+
+
+    def showSobelEdge(self):
+        plt.subplot(141)
+
+        plt.title("thresh=10")
+
+        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=10),cmap="gray")
+        plt.axis("off")
+        plt.subplot(142)
+        plt.title("thresh=127")
+        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=127),cmap="gray")
+
+        plt.axis("off")
+
+        plt.subplot(143)
+        plt.title("thresh=200")
+
+        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=200),cmap="gray")
+        plt.axis("off")
+
+        plt.subplot(144)
+        plt.title("defualt")
+
+        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage),cmap="gray")
+        plt.axis("off")
+
+
+        plt.show()
+
+    def showSobelAlgorithm(self):
+        
+        plt.subplot(141)
+
+        plt.title("degree=0")
+
+        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=0),cmap="gray")
+        plt.axis("off")
+        plt.subplot(142)
+        plt.title("degree=45")
+        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=45),cmap="gray")
+
+        plt.axis("off")
+
+        plt.subplot(143)
+        plt.title("degree=90")
+
+        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=90),cmap="gray")
+        plt.axis("off")
+
+        plt.subplot(144)
+        plt.title("degree=135")
+
+        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=135),cmap="gray")
+        plt.axis("off")
+
+
+        plt.show()
     
         
 
@@ -110,7 +213,7 @@ class ImageProcessingWindow(QDialog, MainUI):
         #If the filename is not empty
         if fileName:
             #Save image
-            Variables.modifiedImage.save(fileName)
+            Backend.modifiedImage.save(fileName)
 
 
     def show_new_window(self):

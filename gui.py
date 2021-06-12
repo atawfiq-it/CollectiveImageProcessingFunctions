@@ -82,6 +82,22 @@ class MainUI():
         self.spFixButton.setDefault(True)
         self.spFixButton.clicked.connect(self.fixSaltAndPepper)
 
+        self.LogButton = QtWidgets.QPushButton("Show LoG")
+        self.LogButton.setDefault(True)
+        self.LogButton.clicked.connect(self.showLoG)
+
+        self.LaplaceButton = QtWidgets.QPushButton("Show Laplace")
+        self.LaplaceButton.setDefault(True)
+        self.LaplaceButton.clicked.connect(self.showLaplace)
+
+        self.sobelEdgeButton = QtWidgets.QPushButton("Show Sobel Edge")
+        self.sobelEdgeButton.setDefault(True)
+        self.sobelEdgeButton.clicked.connect(self.showSobelEdge)
+
+        self.sobelAlgorithmButton = QtWidgets.QPushButton("Show Sobel Algorithm")
+        self.sobelAlgorithmButton.setDefault(True)
+        self.sobelAlgorithmButton.clicked.connect(self.showSobelAlgorithm)
+
         self.fourierSpecButton = QtWidgets.QPushButton("Show Fourier")
         self.fourierSpecButton.setDefault(True)
         self.fourierSpecButton.clicked.connect(self.showFourier)
@@ -100,6 +116,10 @@ class MainUI():
         self.bottomLayout.addWidget(self.spNoiseButton)
         self.bottomLayout.addWidget(self.spFixButton)
         self.bottomLayout.addWidget(self.fourierSpecButton)
+        self.bottomLayout.addWidget(self.LogButton)
+        self.bottomLayout.addWidget(self.LaplaceButton)
+        self.bottomLayout.addWidget(self.sobelEdgeButton)
+        self.bottomLayout.addWidget(self.sobelAlgorithmButton)
         self.bottomLayout.addWidget(self.saveButton)
 
         self.mainLayout = QtWidgets.QGridLayout()

@@ -4,10 +4,12 @@ from matplotlib import pyplot as plt
 import numpy as np
 import random
 import cv2
-from scipy import fft
+from scipy import fft, signal
+from scipy.ndimage import rotate
 
 
-class Variables():
+
+class Backend():
     #Creating a one-pixel image for initializing the currImage
     mode = 'RGB'
     size = (1, 1)
@@ -46,15 +48,15 @@ class Variables():
     def periodic_noise(pilImage):
         # Original image
         plt.figure(figsize=(15,10))
-        skImage = Variables.imageToSKImage(pilImage)
+        skImage = Backend.imageToSKImage(pilImage)
         im = np.mean(skImage, axis=2) / 255
         print(im.shape)
-        Variables.plot_image(1, im)
+        Backend.plot_image(1, im)
         plt.title('Original Image')
 
         # Get original image in frequency domain
-        im_fft_shift = Variables.get_fft_shift(im)
-        Variables.plot_freq(3, im_fft_shift)
+        im_fft_shift = Backend.get_fft_shift(im)
+        Backend.plot_freq(3, im_fft_shift)
         plt.title('Original Image Spectrum')
 
         # Add periodic noise to the image
@@ -62,15 +64,15 @@ class Variables():
         for n in range(im.shape[1]):
             im_noisy[:, n] += np.cos(0.1*np.pi*n)
             
-        Variables.plot_image(4, im_noisy)
+        Backend.plot_image(4, im_noisy)
         plt.title('Image after adding Periodic Noise')
 
         # Noisy image in frequency domain
-        im_noisy_fft_shift = Variables.get_fft_shift(im_noisy)
-        Variables.plot_freq(6, im_noisy_fft_shift)
+        im_noisy_fft_shift = Backend.get_fft_shift(im_noisy)
+        Backend.plot_freq(6, im_noisy_fft_shift)
         plt.title('Noisy Image Spectrum')
 
-        Variables.plot_freq(8, im_noisy_fft_shift - im_fft_shift)
+        Backend.plot_freq(8, im_noisy_fft_shift - im_fft_shift)
         plt.title('Diff between Noisy and Original Spectrum')
 
         im_recovered_fft_shift = np.copy(im_noisy_fft_shift)
@@ -86,10 +88,10 @@ class Variables():
         # Retrieve original image
         im_fft_restored = fft.ifftshift(im_recovered_fft_shift)
         im_restored = np.real(fft.ifft2(im_fft_restored))
-        Variables.plot_image(10, im_restored)
+        Backend.plot_image(10, im_restored)
         plt.title('Recovered Image')
 
-        Variables.plot_freq(12, im_recovered_fft_shift)
+        Backend.plot_freq(12, im_recovered_fft_shift)
         plt.title('Recovered Image Spectrum')
 
         plt.tight_layout()
@@ -99,7 +101,7 @@ class Variables():
     #Adding Salt and Pepper
 
         #Convert pillow image to open-cv
-        img = Variables.imageToSKImage(pilImage)
+        img = Backend.imageToSKImage(pilImage)
         # Getting the dimensions of the image
         row , col = img.shape[:-1]
         
@@ -139,7 +141,7 @@ class Variables():
     def fix_sp_noise(pilImage, filter_size=3):
     #Using median filter to fix salt and pepper noise
 
-        data = Variables.imageToSKImage(pilImage.convert("L"))
+        data = Backend.imageToSKImage(pilImage.convert("L"))
 
         temp = []
         indexer = filter_size // 2
@@ -168,7 +170,7 @@ class Variables():
         return imgResult
 
     def fourierTransform(pilImage):
-        image1 = Variables.imageToSKImage(pilImage.convert("L"))
+        image1 = Backend.imageToSKImage(pilImage.convert("L"))
         image1_spectrum = np.fft.fft2(image1)
         image1_spectrum_centered=np.fft.ifftshift(image1_spectrum)
         
@@ -181,9 +183,102 @@ class Variables():
         plt.show()
 
     def equalizedHistogram(pilImage):
-        img = Variables.imageToSKImage(pilImage.convert("L"))
+        img = Backend.imageToSKImage(pilImage.convert("L"))
         equalized_image = cv2.equalizeHist(img)
         #plt.figure(figsize=(20, 16), constrained_layout=False)
         plt.subplot(121),plt.hist(equalized_image.flatten(),256,[0,256], color = 'b'),plt.xlim([0,256]),plt.title("Equalized histogram")
         plt.subplot(122),plt.imshow(equalized_image,"gray"),plt.title("Equalized Image")
         plt.show()
+
+    #Sobel Operator , return the operator, can rotate it by a specific degree
+    def SobelOperator(degree=0):
+
+        SOBEL_OPERATOR = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+        rotated_operator=rotate(SOBEL_OPERATOR, angle=degree)
+        return rotated_operator
+
+    #Sobel Algorithm uses the previous function to get the edges with the degree 
+    #Sobel parameters ,Degree and threshold
+    def SobelAlogrithm(pilImage,degree=0,threshold=-1):
+        
+        image = Backend.imageToSKImage(pilImage.convert("L"))
+        new_image = np.zeros(image.shape)    #place holder
+        kernel= Backend.SobelOperator(degree)#kernel generation
+        new_image = signal.convolve2d(image, kernel, boundary='symm', mode='same')#covloution
+        new_image = np.abs(new_image)#absolute value
+        new_image = 255 - new_image*(255 / np.max(new_image)) #normalization
+        if threshold==-1:
+            return new_image.astype(np.uint8)
+        else:
+            ret,th1 = cv2.threshold(new_image,threshold,255,cv2.THRESH_BINARY) #less than threshold set to 0 otherwise set to 255
+            return th1
+
+    #Sobel Edge detection , the dafulat one x and y direction ,you can play with the treshold
+    def Sobel_edge_detector(pilImage,threshold=-1):
+        
+        image = Backend.imageToSKImage(pilImage.convert("L"))
+        #place holders
+        new_image1 = np.zeros(image.shape)
+        new_image2 = np.zeros(image.shape)
+        #generating kernels
+        sobel_operator_h=Backend.SobelOperator(0)
+        sobel_operator_v=Backend.SobelOperator(90)
+        #calclute gradient
+        new_image1 = signal.convolve2d(image, sobel_operator_h, boundary='symm', mode='same')
+        new_image2 = signal.convolve2d(image, sobel_operator_v, boundary='symm', mode='same')
+        #magnitude
+        new_image1 = np.sqrt(new_image1*new_image1+new_image2*new_image2)
+        #normalization
+        new_image1 = 255 - new_image1*(255 / np.max(new_image1))
+        if threshold==-1:
+            return new_image1.astype(np.uint8)
+        else:
+            ret,th1 = cv2.threshold(new_image1,threshold,255,cv2.THRESH_BINARY) #less than threshold set to 0 otherwise set to 255
+        return th1
+
+    #return the laplace operator , two most recommended filters 
+    def LaplaceOperator(operator_type):
+        if operator_type == "fourfields":
+            laplace_operator = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
+        elif operator_type == "eightfields":
+            laplace_operator = np.array([[1, 1, 1], [1, -8, 1], [1, 1, 1]])
+        else:
+            raise ("type Error")
+        return laplace_operator
+
+    #laplace edge detection , you can change the threshold  and the operator type
+    def LaplaceAlogrithm(pilImage, operator_type="eightfields",threshold=-1):
+        image = Backend.imageToSKImage(pilImage.convert("L"))
+        new_image = np.zeros(image.shape)
+        image = cv2.copyMakeBorder(image, 1, 1, 1, 1, cv2.BORDER_DEFAULT)
+        laplace_operator = Backend.LaplaceOperator(operator_type)
+        new_image = signal.convolve2d(image, laplace_operator, mode='same')
+        new_image=np.abs(new_image)
+        new_image = 255-new_image * (255 / np.max(image))
+        if threshold==-1:
+            return new_image.astype(np.uint8)
+        else:
+            ret,th1 = cv2.threshold(new_image,threshold,255,cv2.THRESH_BINARY) #less than threshold set to 0 otherwise set to 255
+        return th1
+
+    #laplace of gaussian , you can change the smoothing kernel , operator type and threshold 
+    def LaplaceOfGaussianAlogrithm(pilImage,operator_type="eightfields",kernel_size=3,threshold=-1):
+        if kernel_size%2==0:
+            print("kernel size must be odd number")
+            return 
+
+        image = Backend.imageToSKImage(pilImage.convert("L"))
+        new_image = np.zeros(image.shape)
+        blur = cv2.GaussianBlur(image,(kernel_size,kernel_size),0)
+        blur = cv2.copyMakeBorder(blur, 1, 1, 1, 1, cv2.BORDER_DEFAULT)
+        laplace_operator = Backend.LaplaceOperator(operator_type)
+        new_image = signal.convolve2d(blur, laplace_operator, mode='same')
+        new_image=np.abs(new_image)
+
+        new_image = 255-new_image * (255 / np.max(image))
+        # print(np.max(new_image))
+        if threshold==-1:
+            return new_image.astype(np.uint8)
+        else:
+            ret,th1 = cv2.threshold(new_image,threshold,255,cv2.THRESH_BINARY) #less than threshold set to 0 otherwise set to 255
+        return th1
