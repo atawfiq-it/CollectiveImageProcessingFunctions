@@ -1,56 +1,48 @@
+import numpy as np
 from gui import MainUI
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-import copy
-import threading
-import math 
-
-from vars import Variables
+from backend import Backend
 from PIL import Image, ImageQt
-
-from scipy import fft
-
-import numpy as np
-
 import matplotlib.pyplot as plt
-
-class LoadImageClass(threading.Thread):
-    def __init__(self, uiClass): 
-        self.uiClass = uiClass
-        threading.Thread.__init__(self) 
-
-    def run(self): 
-        self.loadImages()
-
-    def loadImage(self, img, label, plot):
-        qImage = ImageQt.ImageQt(img)
-        label.setPixmap(QPixmap.fromImage(qImage).scaledToHeight(Variables.image_size))
-        
-        freq = self.uiClass.get_fft(img)
-        plot.setImage((20*np.log10( 0.1 + freq)).astype(int))        
-
-    def loadImages(self):
-        self.loadImage(Variables.currImage, self.uiClass.labelOriginalImage, self.uiClass.originalPlotImage)
-        self.loadImage(Variables.modifiedImage, self.uiClass.labelModifiedImage, self.uiClass.modifiedPlotImage)
 
 #Main Window Class
 class ImageProcessingWindow(QDialog, MainUI):
     def __init__(self, parent=None):
         super(ImageProcessingWindow, self).__init__(parent)
         
-        #Getting controls from the gui.py file
+        #Getting controls for both main window and extra window from the gui.py file
         self.setupGUI(self)
         self.setLayout(self.mainLayout)
+
+
+    
+
+    
+
+    def loadImages(self):
+        #Converting image to qImage and showing it in the image control
+        qImage1 = Backend.imageToQImage(Backend.currImage)
+        self.labelOriginalImage.setPixmap(QPixmap.fromImage(qImage1).scaled(Backend.image_size, Backend.image_size))
+        self.labelOriginalImage.setScaledContents(True)
+
+        qImage2 = Backend.imageToQImage(Backend.modifiedImage)
+        self.labelModifiedImage.setPixmap(QPixmap.fromImage(qImage2).scaled(Backend.image_size, Backend.image_size))
+        self.labelModifiedImage.setScaledContents(True)
+
+        im_orig = np.mean(np.asarray(Backend.currImage), axis=2) / 255
+        im_fft_shift = Backend.get_fft_shift(im_orig)
+        self.originalPlotImage.setImage((20*np.log10( 0.1 + im_fft_shift)).astype(int))
+
+        im_modified = np.mean(np.asarray(Backend.modifiedImage), axis=2) / 255
+        im_fft_shift_m = Backend.get_fft_shift(im_modified)
+        self.modifiedPlotImage.setImage((20*np.log10( 0.1 + im_fft_shift_m)).astype(int))
+
         
-        #fileName = "images/202px-Android_robot.png"
-        fileName = "parrot.PNG"
-        Variables.currImage = Image.open(fileName).convert('RGB')
-        Variables.modifiedImage = Variables.currImage.copy()
-        LoadImageClass(self).start()
-        
+
     def getImageFile(self):
         fileName, _ = QFileDialog.getOpenFileName(self, 'Open File', QDir.rootPath() , '*.png *.jpg *.jpeg')
 
@@ -60,82 +52,172 @@ class ImageProcessingWindow(QDialog, MainUI):
             self.styleTextBoxPath.setText(fileName)
             
             #Reading into an image object and showing it in the image control
-            Variables.currImage = Image.open(fileName).convert('RGB')
-            Variables.modifiedImage = Variables.currImage.copy()
-            LoadImageClass(self).start()
-    
-    def get_fft(self, image):
-        img_arr = np.array(image)
-        if(len(img_arr.shape) == 3): # RGB
-            img_gray_scaled = np.mean(img_arr, axis=2) / 255
-        else: # Gray
-            img_gray_scaled = img_arr / 255
-
-        im_fft = fft.fft2((img_gray_scaled).astype(float))
-        return fft.fftshift( im_fft )
-    
-    def toGray(self):
-        Variables.modifiedImage = Variables.currImage.convert('L')
-        LoadImageClass(self).start()
-
+            Backend.currImage = Image.open(fileName)
+            self.toOriginal()
+            
     def toPeriodic(self):
-        Variables.modifiedImage = Variables.currImage.convert('L')
-        im = np.array(Variables.modifiedImage)
-        assert(len(im.shape) == 2)
+        Backend.periodic_noise(self, Backend.currImage)
 
-        factor = float(self.periodicText.text())
+    def toPeriodic2(self):
+        Backend.periodic2_noise(self, Backend.currImage)
 
-        im = im.astype(np.float64)
-        for n in range(im.shape[0]):
-            im[n, :] += np.cos(factor*np.pi*n) * 255
+        #set image control to the converted image
+        self.loadImages()
 
-        #im /= (im.max()/255.0)
+    def toOriginal(self):
+        Backend.modifiedImage = Backend.currImage.copy()
+        self.loadImages()
+
+    
+
+
+    def toGray(self):
+        #call gray transformation method
+        Backend.transformToGray(Backend)
         
-        im = im.astype(np.uint8)
-        Variables.modifiedImage = Image.fromarray(np.uint8(im))
-        LoadImageClass(self).start()
-        
-    def removePeriodic(self):
-        im = np.array(Variables.modifiedImage)
-        assert(len(im.shape) == 2)
+        #set image control to the converted image
+        self.loadImages()
 
-        freq = self.get_fft(im)
-        freq1 = self.get_fft(np.array(Variables.currImage.convert('L')))
-        freq_new = freq - freq1
-        
-        plt.figure(figsize=(15,10))
-        plt.subplot(4,1,1), plt.imshow( (20*np.log10( 0.1 + freq1)).astype(int), cmap=plt.cm.gray)
-        plt.subplot(4,1,2), plt.imshow( (20*np.log10( 0.1 + freq)).astype(int), cmap=plt.cm.gray)
-        plt.subplot(4,1,3), plt.imshow( (20*np.log10( 0.1 + freq_new)).astype(int), cmap=plt.cm.gray)
-        
-        limit = 1
-        freq2 = freq.copy()
-        halfPoint = freq2.shape[0]/2
-        halfPointCol = freq2.shape[1]/2
-        for i in range(freq2.shape[0]):
-            for j in range(freq2.shape[1]):
-                if (i > halfPoint-limit and i < halfPoint+limit) or (j > halfPointCol-limit and j < halfPointCol+limit) :
-                    freq2[i][j] = 0
+        # self.show_new_window()
 
-        plt.subplot(4,1,4), plt.imshow( (20*np.log10( 0.1 + freq2)).astype(int), cmap=plt.cm.gray)
+
+    def getHist(self):
+        #call gray transformation method
+        Backend.transformToGray(Backend)
+
+        grayArray = np.array(Backend.imgToGray(Backend.currImage))
+        #Create the histogram from gray image
+        plt.hist(grayArray.ravel(), bins=100)
+        plt.show()
+        #Backend.histImage = Image.fromarray(histNPArray)
+
+    def addSaltAndPepper(self):
+        Backend.modifiedImage = Backend.add_sp_noise(Backend.currImage)
+        self.loadImages()
+
+    def fixSaltAndPepper(self):
+        Backend.modifiedImage = Backend.fix_sp_noise(Backend.currImage)
+        self.loadImages()
+
+    def showFourier(self):
+        Backend.fourierTransform(Backend.currImage)
+
+    def showEquHistogram(self):
+        Backend.equalizedHistogram(Backend.currImage)
+
+    def showLoG(self):
+        plt.subplot(131)
+        plt.title("loG 3x3")
+        plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=3),cmap="gray")
+        plt.axis("off")
+        plt.subplot(132)
+        plt.title("loG 5x5")
+        plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=5),cmap="gray")
+        plt.axis("off")
+        plt.subplot(133)
+
+        plt.title("loG 7x7")
+        plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=17),cmap="gray")
+        plt.axis("off")
         plt.show()
 
-        im_restored = np.real(fft.ifft2(fft.ifftshift(freq2)) * 255)
-        #im_restored /= (im_restored.max()/255.0)
-        im_restored = 255 - im_restored
+    def showLaplace(self):
+        plt.subplot(141)
+        plt.title("thresh =10")
 
-        Variables.modifiedImage = Image.fromarray(np.uint8(im_restored))
-        LoadImageClass(self).start()
+        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=10),cmap="gray")
+        plt.axis("off")
+
+        plt.subplot(142)
+
+        plt.title("thresh =127")
+
+        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=127),cmap="gray")
+        plt.axis("off")
+
+        plt.subplot(143)
+
+        plt.title("thresh =200")
+
+        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=200),cmap="gray")
+        plt.axis("off")
+        plt.subplot(144)
+
+        plt.title("defualt")
+
+        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields"),cmap="gray")
+        plt.axis("off")
+
+        plt.show()
+
+
+    def showSobelEdge(self):
+        plt.subplot(141)
+
+        plt.title("thresh=10")
+
+        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=10),cmap="gray")
+        plt.axis("off")
+        plt.subplot(142)
+        plt.title("thresh=127")
+        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=127),cmap="gray")
+
+        plt.axis("off")
+
+        plt.subplot(143)
+        plt.title("thresh=200")
+
+        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=200),cmap="gray")
+        plt.axis("off")
+
+        plt.subplot(144)
+        plt.title("defualt")
+
+        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage),cmap="gray")
+        plt.axis("off")
+
+
+        plt.show()
+
+    def showSobelAlgorithm(self):
         
-    def toOriginal(self):
-        Variables.modifiedImage = Variables.currImage.copy()
-        LoadImageClass(self).start()
+        plt.subplot(141)
+
+        plt.title("degree=0")
+
+        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=0),cmap="gray")
+        plt.axis("off")
+        plt.subplot(142)
+        plt.title("degree=45")
+        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=45),cmap="gray")
+
+        plt.axis("off")
+
+        plt.subplot(143)
+        plt.title("degree=90")
+
+        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=90),cmap="gray")
+        plt.axis("off")
+
+        plt.subplot(144)
+        plt.title("degree=135")
+
+        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=135),cmap="gray")
+        plt.axis("off")
+
+
+        plt.show()
+    
+        
 
     def saveImage(self):
-        fileName, _ = QFileDialog.getSaveFileName(self, 'Save File', QDir.rootPath() , '*.png')
+        fileName, _ = QFileDialog.getSaveFileName(self, 'Save File', QDir.rootPath() , '*.png *.jpg *.jpeg')
 
         #If the filename is not empty
         if fileName:
             #Save image
-            Variables.modifiedImage.save(fileName)
-            
+            Backend.modifiedImage.save(fileName)
+
+
+    def show_new_window(self):
+        self.getHist(self)
