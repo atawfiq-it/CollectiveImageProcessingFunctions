@@ -18,6 +18,8 @@ class Backend():
     currImage = Image.new(mode, size, color)
     modifiedImage = Image.new(mode, size, color)
     histImage = Image.new(mode, size, color)
+    clicks = 0
+    clicksData = np.zeros((2, 2));
 
     def transformToGray(self):
         #Convert current image to grayscale
@@ -39,43 +41,85 @@ class Backend():
         im_fft = fft.fft2((im).astype(float))
         return fft.fftshift( im_fft )
 
-    def plot_image(cell, im):
-        plt.subplot(4,3,cell), plt.imshow(im, cmap='gray'), plt.axis('off')
+    def plot_image(fig, title, img, row, col, cell):
+        ax = fig.add_subplot(row, col, cell)
+        plt.imshow(img, cmap='gray')
+        plt.axis('off')
+        ax.set_title(title)
 
-    def plot_freq(cell, freq):
-        plt.subplot(4,3,cell), plt.imshow( (20*np.log10( 0.1 + freq)).astype(int), cmap=plt.cm.gray)
+    def plot_freq(fig, title, freq, row, col, cell):
+        ax = fig.add_subplot(row, col, cell)
+        plt.imshow( (20*np.log10( 0.1 + freq)).astype(int), cmap=plt.cm.gray)
+        ax.set_title(title)
 
-    def periodic_noise(pilImage):
+    def onclick(event):        
+        if Backend.clicks == 0 or Backend.clicks == 1:
+            Backend.clicksData[Backend.clicks, 0] = int(event.xdata)
+            Backend.clicksData[Backend.clicks, 1] = int(event.ydata)
+            Backend.clicks += 1
+
+        if Backend.clicks == 2:
+            Backend.clicks = 0
+            im_recovered_fft_shift = np.copy(Backend.im_noisy_fft_shift)
+
+            x1 = Backend.clicksData[0, 0]
+            y1 = Backend.clicksData[0, 1]
+            x2 = Backend.clicksData[1, 0]
+            y2 = Backend.clicksData[1, 1]
+
+            # Remove the periodic noisy as seen in the image
+            for i in range(im_recovered_fft_shift.shape[0]):
+                for j in range(im_recovered_fft_shift.shape[1]):
+                    if i == y1 or i == y2 or j == x1 or j == x2:
+                        im_recovered_fft_shift[i][j] = 0
+
+            fig3 = plt.figure()
+
+            # Retrieve original image
+            im_fft_restored = fft.ifftshift(im_recovered_fft_shift)
+            im_restored = np.real(fft.ifft2(im_fft_restored))
+            Backend.plot_image(fig3, 'Recovered Image', im_restored, 1, 2, 1)
+            Backend.plot_freq(fig3, 'Recovered Image Spectrum', im_recovered_fft_shift, 1, 2, 2)
+            
+    
+    def periodic_noise_common(self, pilImage):
         # Original image
-        plt.figure(figsize=(15,10))
+        fig = plt.figure()
+
         skImage = Backend.imageToSKImage(pilImage)
         im = np.mean(skImage, axis=2) / 255
-        print(im.shape)
-        Backend.plot_image(1, im)
-        plt.title('Original Image')
+        Backend.plot_image(fig, 'Original Image', im, 2, 2, 1)
 
         # Get original image in frequency domain
         im_fft_shift = Backend.get_fft_shift(im)
-        Backend.plot_freq(3, im_fft_shift)
-        plt.title('Original Image Spectrum')
+        Backend.plot_freq(fig, 'Original Image Spectrum', im_fft_shift, 2, 2, 2)
+
+        factor = float(self.periodicText.text())
 
         # Add periodic noise to the image
         im_noisy = np.copy(im)
         for n in range(im.shape[1]):
-            im_noisy[:, n] += np.cos(0.1*np.pi*n)
-            
-        Backend.plot_image(4, im_noisy)
-        plt.title('Image after adding Periodic Noise')
+            im_noisy[:, n] += np.cos(factor*np.pi*n)
+
+        Backend.plot_image(fig, 'Image after adding Periodic Noise', im_noisy, 2, 2, 3)
 
         # Noisy image in frequency domain
-        im_noisy_fft_shift = Backend.get_fft_shift(im_noisy)
-        Backend.plot_freq(6, im_noisy_fft_shift)
-        plt.title('Noisy Image Spectrum')
+        Backend.im_noisy_fft_shift = Backend.get_fft_shift(im_noisy)
+        Backend.plot_freq(fig, 'Noisy Image Spectrum', Backend.im_noisy_fft_shift, 2, 2, 4)
 
-        Backend.plot_freq(8, im_noisy_fft_shift - im_fft_shift)
-        plt.title('Diff between Noisy and Original Spectrum')
+        fig2 = plt.figure()
 
-        im_recovered_fft_shift = np.copy(im_noisy_fft_shift)
+        fft_diff = Backend.im_noisy_fft_shift - im_fft_shift
+        Backend.plot_freq(fig2, 'Diff between Noisy and Original Spectrum', fft_diff, 1, 1, 1)
+
+        fig2.canvas.mpl_connect('button_press_event', Backend.onclick)
+
+    def periodic2_noise(self, pilImage):
+        Backend.periodic_noise_common(self, pilImage)
+
+    def periodic_noise(self, pilImage):
+        Backend.periodic_noise_common(self, pilImage)
+        im_recovered_fft_shift = np.copy(Backend.im_noisy_fft_shift)
 
         # Remove the periodic noisy as seen in the image
         limit = 1
@@ -85,17 +129,14 @@ class Backend():
                 if i > im_recovered_fft_shift.shape[0]/2-limit and i < im_recovered_fft_shift.shape[0]/2+limit:
                     im_recovered_fft_shift[i][j] = 0
 
+        fig3 = plt.figure()
+
         # Retrieve original image
         im_fft_restored = fft.ifftshift(im_recovered_fft_shift)
         im_restored = np.real(fft.ifft2(im_fft_restored))
-        Backend.plot_image(10, im_restored)
-        plt.title('Recovered Image')
+        Backend.plot_image(fig3, 'Recovered Image', im_restored, 1, 2, 1)
+        Backend.plot_freq(fig3, 'Recovered Image Spectrum', im_recovered_fft_shift, 1, 2, 2)
 
-        Backend.plot_freq(12, im_recovered_fft_shift)
-        plt.title('Recovered Image Spectrum')
-
-        plt.tight_layout()
-        plt.show()
 
     def add_sp_noise(pilImage):
     #Adding Salt and Pepper
@@ -103,7 +144,7 @@ class Backend():
         #Convert pillow image to open-cv
         img = Backend.imageToSKImage(pilImage)
         # Getting the dimensions of the image
-        row , col = img.shape[:-1]
+        row , col = img.shape[:2]#Error at :-1
         
         # Randomly pick some pixels in the
         # image for coloring them white
@@ -139,8 +180,10 @@ class Backend():
         return imgResult
     
     def fix_sp_noise(pilImage, filter_size=3):
-    #Using median filter to fix salt and pepper noise
+        median_blur= cv2.medianBlur(Backend.imageToSKImage(pilImage.convert("L")), 3)
+        return Image.fromarray(median_blur)
 
+        #Using median filter to fix salt and pepper noise
         data = Backend.imageToSKImage(pilImage.convert("L"))
 
         temp = []
@@ -184,11 +227,30 @@ class Backend():
 
     def equalizedHistogram(pilImage):
         img = Backend.imageToSKImage(pilImage.convert("L"))
+
+
         equalized_image = cv2.equalizeHist(img)
         #plt.figure(figsize=(20, 16), constrained_layout=False)
-        plt.subplot(121),plt.hist(equalized_image.flatten(),256,[0,256], color = 'b'),plt.xlim([0,256]),plt.title("Equalized histogram")
-        plt.subplot(122),plt.imshow(equalized_image,"gray"),plt.title("Equalized Image")
+        #plt.subplot(1,2,1),plt.hist(equalized_image.ravel(),bins=100),plt.title("Equalized histogram")
+        
+        
+        #plt.subplot(1,2,2),plt.imshow(equalized_image,"gray", aspect='auto'),plt.title("Equalized Image")
+
+        max_range = list(range(1, 257))#1 to 256
+        eq_hist, bins = np.histogram(equalized_image.ravel(), bins=max_range)
+        fig, [ax1, ax2] = plt.subplots(1, 2, figsize=(15,5))
+        ax1.bar(max_range[:-1], eq_hist)#1 to 255 .. hist_bars was defined here
+        #The next code does not show well on a plot
+        # for bar in hist_bars:
+        #     yval = bar.get_height()
+        #     if yval > 0:
+        #         ax1.text(bar.get_x(), yval + .005, yval)
+
+        #Flipped with origin lower to show y axis starting from the bottom
+        ax2.imshow(equalized_image[::-1], cmap=plt.cm.gray, origin='lower')
+        fig.tight_layout()
         plt.show()
+        
 
     #Sobel Operator , return the operator, can rotate it by a specific degree
     def SobelOperator(degree=0):

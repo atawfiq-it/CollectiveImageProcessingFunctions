@@ -33,11 +33,15 @@ class ImageProcessingWindow(QDialog, MainUI):
         self.labelModifiedImage.setPixmap(QPixmap.fromImage(qImage2).scaled(Backend.image_size, Backend.image_size))
         self.labelModifiedImage.setScaledContents(True)
 
-        im_orig = np.mean(np.asarray(Backend.currImage), axis=2) / 255
+        #Show plot images after an image is loaded
+        self.showPlot()
+        im_ori_arr = np.asarray(Backend.currImage.getdata()).reshape(Backend.currImage.size[1], Backend.currImage.size[0], -1)
+        im_orig = np.mean(im_ori_arr, axis=2) / 255
         im_fft_shift = Backend.get_fft_shift(im_orig)
         self.originalPlotImage.setImage((20*np.log10( 0.1 + im_fft_shift)).astype(int))
 
-        im_modified = np.mean(np.asarray(Backend.modifiedImage), axis=2) / 255
+        im_mod_arr = np.asarray(Backend.modifiedImage.getdata()).reshape(Backend.modifiedImage.size[1], Backend.modifiedImage.size[0], -1)
+        im_modified = np.mean(im_mod_arr, axis=2) / 255
         im_fft_shift_m = Backend.get_fft_shift(im_modified)
         self.modifiedPlotImage.setImage((20*np.log10( 0.1 + im_fft_shift_m)).astype(int))
 
@@ -52,7 +56,7 @@ class ImageProcessingWindow(QDialog, MainUI):
             self.styleTextBoxPath.setText(fileName)
             
             #Reading into an image object and showing it in the image control
-            Backend.currImage = Image.open(fileName)
+            Backend.currImage = Image.open(fileName).convert("L")
             self.toOriginal()
             
     def toPeriodic(self):
@@ -61,12 +65,17 @@ class ImageProcessingWindow(QDialog, MainUI):
         #set image control to the converted image
         self.loadImages()
 
+    def toPeriodic2(self):
+        Backend.periodic2_noise(self, Backend.currImage)
+
+        #set image control to the converted image
+        self.loadImages()
+
+
+
     def toOriginal(self):
         Backend.modifiedImage = Backend.currImage.copy()
         self.loadImages()
-
-    
-
 
     def toGray(self):
         #call gray transformation method
@@ -89,18 +98,18 @@ class ImageProcessingWindow(QDialog, MainUI):
         #Backend.histImage = Image.fromarray(histNPArray)
 
     def addSaltAndPepper(self):
-        Backend.modifiedImage = Backend.add_sp_noise(Backend.currImage)
+        Backend.modifiedImage = Backend.add_sp_noise(Backend.modifiedImage)
         self.loadImages()
 
     def fixSaltAndPepper(self):
-        Backend.modifiedImage = Backend.fix_sp_noise(Backend.currImage)
+        Backend.modifiedImage = Backend.fix_sp_noise(Backend.modifiedImage)
         self.loadImages()
 
     def showFourier(self):
-        Backend.fourierTransform(Backend.currImage)
+        Backend.fourierTransform(Backend.modifiedImage)
 
     def showEquHistogram(self):
-        Backend.equalizedHistogram(Backend.currImage)
+        Backend.equalizedHistogram(Backend.modifiedImage)
 
     def showLoG(self):
         plt.subplot(131)
