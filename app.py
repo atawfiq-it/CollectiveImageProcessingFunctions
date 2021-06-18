@@ -1,3 +1,4 @@
+from PyQt5 import QtCore
 import numpy as np
 from gui import MainUI
 from PyQt5 import QtGui
@@ -17,6 +18,9 @@ class ImageProcessingWindow(QDialog, MainUI):
         #Getting controls for both main window and extra window from the gui.py file
         self.setupGUI(self)
         self.setLayout(self.mainLayout)
+        #Disable question mark on top, enable minimize, maximize, and close buttons
+        self.setWindowFlags(QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint | 
+        QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowMaximizeButtonHint| QtCore.Qt.WindowMinimizeButtonHint)
 
 
     
@@ -60,7 +64,7 @@ class ImageProcessingWindow(QDialog, MainUI):
             self.toOriginal()
             
     def toPeriodic(self):
-        Backend.periodic_noise(Backend.currImage)
+        Backend.periodic_noise(self, Backend.currImage)
 
         #set image control to the converted image
         self.loadImages()
@@ -111,105 +115,105 @@ class ImageProcessingWindow(QDialog, MainUI):
     def showEquHistogram(self):
         Backend.equalizedHistogram(Backend.modifiedImage)
 
-    def showLoG(self):
-        plt.subplot(131)
-        plt.title("loG 3x3")
-        plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=3),cmap="gray")
+    def showLapOfGaus(self):
+        plt.subplot(111)
+        #plt.title("loG 3x3")
+        plt.imshow(Backend.LaplaceOfGaussianAlogrithm(self, Backend.currImage),cmap="gray")
         plt.axis("off")
-        plt.subplot(132)
-        plt.title("loG 5x5")
-        plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=5),cmap="gray")
-        plt.axis("off")
-        plt.subplot(133)
+        # plt.subplot(132)
+        # plt.title("loG 5x5")
+        # plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=5),cmap="gray")
+        # plt.axis("off")
+        # plt.subplot(133)
 
-        plt.title("loG 7x7")
-        plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=17),cmap="gray")
-        plt.axis("off")
+        # plt.title("loG 7x7")
+        # plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=17),cmap="gray")
+        # plt.axis("off")
         plt.show()
 
     def showLaplace(self):
-        plt.subplot(141)
-        plt.title("thresh =10")
+        plt.subplot(111)#141)
+        #plt.title("thresh = " + str(thresholdVal))
 
-        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=10),cmap="gray")
+        plt.imshow(Backend.LaplaceAlogrithm(self, Backend.currImage),cmap="gray")#,operator_type="eightfields",threshold=thresholdVal),cmap="gray")
         plt.axis("off")
 
-        plt.subplot(142)
+        # plt.subplot(142)
 
-        plt.title("thresh =127")
+        # plt.title("thresh =127")
 
-        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=127),cmap="gray")
-        plt.axis("off")
+        # plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=127),cmap="gray")
+        # plt.axis("off")
 
-        plt.subplot(143)
+        # plt.subplot(143)
 
-        plt.title("thresh =200")
+        # plt.title("thresh =200")
 
-        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=200),cmap="gray")
-        plt.axis("off")
-        plt.subplot(144)
+        # plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=200),cmap="gray")
+        # plt.axis("off")
+        # plt.subplot(144)
 
-        plt.title("defualt")
+        # plt.title("defualt")
 
-        plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields"),cmap="gray")
-        plt.axis("off")
+        # plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields"),cmap="gray")
+        # plt.axis("off")
 
         plt.show()
 
 
     def showSobelEdge(self):
-        plt.subplot(141)
+        plt.subplot(111)
 
-        plt.title("thresh=10")
+        #plt.title("thresh=10")
 
-        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=10),cmap="gray")
+        plt.imshow(Backend.Sobel_edge_detector(self, Backend.currImage),cmap="gray")
         plt.axis("off")
-        plt.subplot(142)
-        plt.title("thresh=127")
-        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=127),cmap="gray")
+        # plt.subplot(142)
+        # plt.title("thresh=127")
+        # plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=127),cmap="gray")
 
-        plt.axis("off")
+        # plt.axis("off")
 
-        plt.subplot(143)
-        plt.title("thresh=200")
+        # plt.subplot(143)
+        # plt.title("thresh=200")
 
-        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=200),cmap="gray")
-        plt.axis("off")
+        # plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=200),cmap="gray")
+        # plt.axis("off")
 
-        plt.subplot(144)
-        plt.title("defualt")
+        # plt.subplot(144)
+        # plt.title("defualt")
 
-        plt.imshow(Backend.Sobel_edge_detector(Backend.currImage),cmap="gray")
-        plt.axis("off")
+        # plt.imshow(Backend.Sobel_edge_detector(Backend.currImage),cmap="gray")
+        # plt.axis("off")
 
 
         plt.show()
 
     def showSobelAlgorithm(self):
         
-        plt.subplot(141)
+        plt.subplot(111)
 
-        plt.title("degree=0")
+        #plt.title("degree=0")
 
-        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=0),cmap="gray")
+        plt.imshow(Backend.SobelAlogrithm(self,Backend.currImage),cmap="gray")
         plt.axis("off")
-        plt.subplot(142)
-        plt.title("degree=45")
-        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=45),cmap="gray")
+        # plt.subplot(142)
+        # plt.title("degree=45")
+        # plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=45),cmap="gray")
 
-        plt.axis("off")
+        # plt.axis("off")
 
-        plt.subplot(143)
-        plt.title("degree=90")
+        # plt.subplot(143)
+        # plt.title("degree=90")
 
-        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=90),cmap="gray")
-        plt.axis("off")
+        # plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=90),cmap="gray")
+        # plt.axis("off")
 
-        plt.subplot(144)
-        plt.title("degree=135")
+        # plt.subplot(144)
+        # plt.title("degree=135")
 
-        plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=135),cmap="gray")
-        plt.axis("off")
+        # plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=135),cmap="gray")
+        # plt.axis("off")
 
 
         plt.show()

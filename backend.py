@@ -49,10 +49,12 @@ class Backend():
 
     def plot_freq(fig, title, freq, row, col, cell):
         ax = fig.add_subplot(row, col, cell)
-        plt.imshow( (20*np.log10( 0.1 + freq)).astype(int), cmap=plt.cm.gray)
+        log_freq = (20*np.log10( 0.1 + freq))
+        plt.imshow(log_freq.astype(int), cmap=plt.cm.gray)
         ax.set_title(title)
+        plt.show()
 
-    def onclick(event):        
+    def getUserClick(event):        
         if Backend.clicks == 0 or Backend.clicks == 1:
             Backend.clicksData[Backend.clicks, 0] = int(event.xdata)
             Backend.clicksData[Backend.clicks, 1] = int(event.ydata)
@@ -86,8 +88,10 @@ class Backend():
         # Original image
         fig = plt.figure()
 
-        skImage = Backend.imageToSKImage(pilImage)
-        im = np.mean(skImage, axis=2) / 255
+        #skImage = Backend.imageToSKImage(pilImage)
+        im_mod_arr = np.asarray(pilImage.getdata()).reshape(pilImage.size[1], pilImage.size[0], -1)
+        im = np.mean(im_mod_arr, axis=2) / 255
+        
         Backend.plot_image(fig, 'Original Image', im, 2, 2, 1)
 
         # Get original image in frequency domain
@@ -112,7 +116,7 @@ class Backend():
         fft_diff = Backend.im_noisy_fft_shift - im_fft_shift
         Backend.plot_freq(fig2, 'Diff between Noisy and Original Spectrum', fft_diff, 1, 1, 1)
 
-        fig2.canvas.mpl_connect('button_press_event', Backend.onclick)
+        fig2.canvas.mpl_connect('button_press_event', Backend.getUserClick)
 
     def periodic2_noise(self, pilImage):
         Backend.periodic_noise_common(self, pilImage)
@@ -261,9 +265,11 @@ class Backend():
 
     #Sobel Algorithm uses the previous function to get the edges with the degree 
     #Sobel parameters ,Degree and threshold
-    def SobelAlogrithm(pilImage,degree=0,threshold=-1):
-        
+    def SobelAlogrithm(self, pilImage):
         image = Backend.imageToSKImage(pilImage.convert("L"))
+        degree = int(self.sobelAlgDegreeText.text())
+        threshold = int(self.sobelAlgThreshText.text())
+
         new_image = np.zeros(image.shape)    #place holder
         kernel= Backend.SobelOperator(degree)#kernel generation
         new_image = signal.convolve2d(image, kernel, boundary='symm', mode='same')#covloution
@@ -276,9 +282,10 @@ class Backend():
             return th1
 
     #Sobel Edge detection , the dafulat one x and y direction ,you can play with the treshold
-    def Sobel_edge_detector(pilImage,threshold=-1):
+    def Sobel_edge_detector(self,pilImage):
         
         image = Backend.imageToSKImage(pilImage.convert("L"))
+        threshold = int(self.sobelText.text())
         #place holders
         new_image1 = np.zeros(image.shape)
         new_image2 = np.zeros(image.shape)
@@ -309,14 +316,18 @@ class Backend():
         return laplace_operator
 
     #laplace edge detection , you can change the threshold  and the operator type
-    def LaplaceAlogrithm(pilImage, operator_type="eightfields",threshold=-1):
+    def LaplaceAlogrithm(self,pilImage):
         image = Backend.imageToSKImage(pilImage.convert("L"))
+        operator_type = str(self.LapOpText.currentText()).replace(" ","")
+        threshold = int(self.LapThreshText.text())
+
         new_image = np.zeros(image.shape)
         image = cv2.copyMakeBorder(image, 1, 1, 1, 1, cv2.BORDER_DEFAULT)
         laplace_operator = Backend.LaplaceOperator(operator_type)
         new_image = signal.convolve2d(image, laplace_operator, mode='same')
-        new_image=np.abs(new_image)
+        new_image = np.abs(new_image)
         new_image = 255-new_image * (255 / np.max(image))
+        
         if threshold==-1:
             return new_image.astype(np.uint8)
         else:
@@ -324,7 +335,12 @@ class Backend():
         return th1
 
     #laplace of gaussian , you can change the smoothing kernel , operator type and threshold 
-    def LaplaceOfGaussianAlogrithm(pilImage,operator_type="eightfields",kernel_size=3,threshold=-1):
+    def LaplaceOfGaussianAlogrithm(self, pilImage):
+
+        operator_type =str(self.LoGOpText.currentText()).replace(" ","")
+        kernel_size = int(self.LoGKerText.text())
+        threshold = int(self.LoGThreshText.text())
+
         if kernel_size%2==0:
             print("kernel size must be odd number")
             return 
