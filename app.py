@@ -1,3 +1,4 @@
+import PIL
 from PyQt5 import QtCore
 import numpy as np
 from gui import MainUI
@@ -49,27 +50,53 @@ class ImageProcessingWindow(QDialog, MainUI):
         im_fft_shift_m = Backend.get_fft_shift(im_modified)
         self.modifiedPlotImage.setImage((20*np.log10( 0.1 + im_fft_shift_m)).astype(int))
 
-        
+        #An image has been loaded successfully
+        Backend.default_image = False
 
-    def getImageFile(self):
+        
+    def getImagePath(self):
         fileName, _ = QFileDialog.getOpenFileName(self, 'Open File', QDir.rootPath() , '*.png *.jpg *.jpeg')
 
         #If the filename is not empty
         if fileName:
             #Open image in the original QPixMap
             self.styleTextBoxPath.setText(fileName)
+            #Open image if selected through browse directly
+            self.getImageFile()
             
+
+    def getImageFile(self):
+
+        #If the filename is not empty
+        if self.styleTextBoxPath.text():
             #Reading into an image object and showing it in the image control
-            Backend.currImage = Image.open(fileName).convert("L")
-            self.toOriginal()
+            try:
+                Backend.currImage = Image.open(self.styleTextBoxPath.text()).convert("L")
+                #Copy original image to the modified
+                self.toOriginal(True)#Skip Check of existing image
+            except FileNotFoundError:
+                Backend.showMessage("Incorrect Path","The provided file path is not correct. Please provide a valid file path.")
+            except PIL.UnidentifiedImageError:
+                Backend.showMessage("Incorrect Type","The provided file can not be interpreted as a valid image. Please provide a valid path to an image file.")
+        else:
+            Backend.showMessage("Empty Path","Kindly fill in the file path or use the Browse button to select a file.")
+
             
     def toPeriodic(self):
+        if Backend.default_image == True:
+            Backend.noImageSelected()
+            return
+            
         Backend.periodic_noise(self, Backend.currImage)
 
         #set image control to the converted image
         self.loadImages()
 
     def toPeriodic2(self):
+        if Backend.default_image == True:
+            Backend.noImageSelected()
+            return
+            
         Backend.periodic2_noise(self, Backend.currImage)
 
         #set image control to the converted image
@@ -77,7 +104,11 @@ class ImageProcessingWindow(QDialog, MainUI):
 
 
 
-    def toOriginal(self):
+    def toOriginal(self, skip=False):
+        if Backend.default_image == True and skip == False:
+            Backend.noImageSelected()
+            return
+
         Backend.modifiedImage = Backend.currImage.copy()
         self.loadImages()
 
@@ -87,11 +118,13 @@ class ImageProcessingWindow(QDialog, MainUI):
         
         #set image control to the converted image
         self.loadImages()
-
-        # self.show_new_window()
-
+        
 
     def getHist(self):
+        if Backend.default_image == True:
+            Backend.noImageSelected()
+            return
+
         #call gray transformation method
         Backend.transformToGray(Backend)
 
@@ -102,10 +135,18 @@ class ImageProcessingWindow(QDialog, MainUI):
         #Backend.histImage = Image.fromarray(histNPArray)
 
     def addSaltAndPepper(self):
+        if Backend.default_image == True:
+            Backend.noImageSelected()
+            return
+            
         Backend.modifiedImage = Backend.add_sp_noise(Backend.modifiedImage)
         self.loadImages()
 
     def fixSaltAndPepper(self):
+        if Backend.default_image == True:
+            Backend.noImageSelected()
+            return
+            
         Backend.modifiedImage = Backend.fix_sp_noise(Backend.modifiedImage)
         self.loadImages()
 
@@ -113,9 +154,17 @@ class ImageProcessingWindow(QDialog, MainUI):
         Backend.fourierTransform(Backend.modifiedImage)
 
     def showEquHistogram(self):
+        if Backend.default_image == True:
+            Backend.noImageSelected()
+            return
+            
         Backend.equalizedHistogram(Backend.modifiedImage)
 
     def showLapOfGaus(self):
+        if Backend.default_image == True:
+            Backend.noImageSelected()
+            return
+            
         plt.subplot(111)
         #plt.title("loG 3x3")
         plt.imshow(Backend.LaplaceOfGaussianAlogrithm(self, Backend.currImage),cmap="gray")
@@ -132,6 +181,10 @@ class ImageProcessingWindow(QDialog, MainUI):
         plt.show()
 
     def showLaplace(self):
+        if Backend.default_image == True:
+            Backend.noImageSelected()
+            return
+            
         plt.subplot(111)#141)
         #plt.title("thresh = " + str(thresholdVal))
 
@@ -162,6 +215,10 @@ class ImageProcessingWindow(QDialog, MainUI):
 
 
     def showSobelEdge(self):
+        if Backend.default_image == True:
+            Backend.noImageSelected()
+            return
+            
         plt.subplot(111)
 
         #plt.title("thresh=10")
@@ -191,6 +248,10 @@ class ImageProcessingWindow(QDialog, MainUI):
 
     def showSobelAlgorithm(self):
         
+        if Backend.default_image == True:
+            Backend.noImageSelected()
+            return
+            
         plt.subplot(111)
 
         #plt.title("degree=0")
@@ -221,6 +282,10 @@ class ImageProcessingWindow(QDialog, MainUI):
         
 
     def saveImage(self):
+        if Backend.default_image == True:
+            Backend.noImageSelected()
+            return
+            
         fileName, _ = QFileDialog.getSaveFileName(self, 'Save File', QDir.rootPath() , '*.png *.jpg *.jpeg')
 
         #If the filename is not empty
@@ -228,6 +293,3 @@ class ImageProcessingWindow(QDialog, MainUI):
             #Save image
             Backend.modifiedImage.save(fileName)
 
-
-    def show_new_window(self):
-        self.getHist(self)

@@ -1,4 +1,5 @@
 from PIL import Image, ImageQt
+from PyQt5 import QtWidgets
 from PyQt5.QtGui import QImage
 from matplotlib import pyplot as plt
 import numpy as np
@@ -11,6 +12,7 @@ from scipy.ndimage import rotate
 
 class Backend():
     #Creating a one-pixel image for initializing the currImage
+    default_image = True
     mode = 'RGB'
     size = (1, 1)
     image_size = 240
@@ -19,7 +21,22 @@ class Backend():
     modifiedImage = Image.new(mode, size, color)
     histImage = Image.new(mode, size, color)
     clicks = 0
-    clicksData = np.zeros((2, 2));
+    clicksData = np.zeros((2, 2))
+    
+    
+
+    def showMessage(title, message):
+        msg = QtWidgets.QMessageBox()
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.setIcon(QtWidgets.QMessageBox.Information)
+        msg.setText(message)
+        #self.msg.setInformativeText("This is additional information")
+        msg.setWindowTitle(title)
+        msg.exec_()
+
+    def noImageSelected():
+        Backend.showMessage("Missing Image","No image has been loaded yet. Please select and load an image in order to use this function.")
+
 
     def transformToGray(self):
         #Convert current image to grayscale
@@ -47,11 +64,15 @@ class Backend():
         plt.axis('off')
         ax.set_title(title)
 
-    def plot_freq(fig, title, freq, row, col, cell):
+    def plot_freq(fig, title, freq, row, col, cell, ylim=False):
         ax = fig.add_subplot(row, col, cell)
         log_freq = (20*np.log10( 0.1 + freq))
+        log_freq = log_freq.clip(min=0)
         plt.imshow(log_freq.astype(int), cmap=plt.cm.gray)
         ax.set_title(title)
+        if ylim == True:
+            plt.ylim([log_freq.shape[0]/2+100, log_freq.shape[0]/2-100])
+            plt.tight_layout()
         plt.show()
 
     def getUserClick(event):        
@@ -85,6 +106,14 @@ class Backend():
             
     
     def periodic_noise_common(self, pilImage):
+        try:
+            factor = float(self.periodicText.text())
+            if factor > 5 or factor < 0.1:
+                raise Exception()
+        except:
+            Backend.showMessage("Wrong Value", "Periodic noise value must be a float number between 0.1 and 5")
+            return
+
         # Original image
         fig = plt.figure()
 
@@ -98,8 +127,8 @@ class Backend():
         im_fft_shift = Backend.get_fft_shift(im)
         Backend.plot_freq(fig, 'Original Image Spectrum', im_fft_shift, 2, 2, 2)
 
-        factor = float(self.periodicText.text())
-
+        
+        
         # Add periodic noise to the image
         im_noisy = np.copy(im)
         for n in range(im.shape[1]):
@@ -112,14 +141,13 @@ class Backend():
         Backend.plot_freq(fig, 'Noisy Image Spectrum', Backend.im_noisy_fft_shift, 2, 2, 4)
 
         fig2 = plt.figure()
-
         fft_diff = Backend.im_noisy_fft_shift - im_fft_shift
-        Backend.plot_freq(fig2, 'Diff between Noisy and Original Spectrum', fft_diff, 1, 1, 1)
-
-        fig2.canvas.mpl_connect('button_press_event', Backend.getUserClick)
+        Backend.plot_freq(fig2, 'Diff between Noisy and Original Spectrum', fft_diff, 1, 1, 1, True)
+        return fig2
 
     def periodic2_noise(self, pilImage):
-        Backend.periodic_noise_common(self, pilImage)
+        fig2 = Backend.periodic_noise_common(self, pilImage)
+        fig2.canvas.mpl_connect('button_press_event', Backend.getUserClick)
 
     def periodic_noise(self, pilImage):
         Backend.periodic_noise_common(self, pilImage)
@@ -267,8 +295,23 @@ class Backend():
     #Sobel parameters ,Degree and threshold
     def SobelAlogrithm(self, pilImage):
         image = Backend.imageToSKImage(pilImage.convert("L"))
-        degree = int(self.sobelAlgDegreeText.text())
-        threshold = int(self.sobelAlgThreshText.text())
+        try:
+            threshold = int(self.sobelAlgThreshText.text())
+            if threshold > 254 or threshold < -1 or threshold == 0:
+                raise Exception()
+        except:
+            Backend.showMessage("Wrong Value", "Threshold value must either be a number between (1 and 254) or -1")
+            return
+
+        try:
+            degree = int(self.sobelAlgDegreeText.text())
+            if degree > 360 or degree < 0:
+                raise Exception()
+        except:
+            Backend.showMessage("Wrong Value", "Degree value must be a number between 0 and 360")
+            return
+            
+        
 
         new_image = np.zeros(image.shape)    #place holder
         kernel= Backend.SobelOperator(degree)#kernel generation
@@ -285,7 +328,14 @@ class Backend():
     def Sobel_edge_detector(self,pilImage):
         
         image = Backend.imageToSKImage(pilImage.convert("L"))
-        threshold = int(self.sobelText.text())
+        try:
+            threshold = int(self.sobelText.text())
+            if threshold > 254 or threshold < -1 or threshold == 0:
+                raise Exception()
+        except:
+            Backend.showMessage("Wrong Value", "Threshold value must either be a number between (1 and 254) or -1")
+            return
+            
         #place holders
         new_image1 = np.zeros(image.shape)
         new_image2 = np.zeros(image.shape)
@@ -318,8 +368,15 @@ class Backend():
     #laplace edge detection , you can change the threshold  and the operator type
     def LaplaceAlogrithm(self,pilImage):
         image = Backend.imageToSKImage(pilImage.convert("L"))
+        try:
+            threshold = int(self.LapThreshText.text())
+            if threshold > 254 or threshold < -1 or threshold == 0:
+                raise Exception()
+        except:
+            Backend.showMessage("Wrong Value", "Threshold value must either be a number between (1 and 254) or -1")
+            return
+        
         operator_type = str(self.LapOpText.currentText()).replace(" ","")
-        threshold = int(self.LapThreshText.text())
 
         new_image = np.zeros(image.shape)
         image = cv2.copyMakeBorder(image, 1, 1, 1, 1, cv2.BORDER_DEFAULT)
@@ -337,13 +394,17 @@ class Backend():
     #laplace of gaussian , you can change the smoothing kernel , operator type and threshold 
     def LaplaceOfGaussianAlogrithm(self, pilImage):
 
+        try:
+            threshold = int(self.LoGThreshText.text())
+            if threshold > 254 or threshold < -1 or threshold == 0:
+                raise Exception()
+        except:
+            Backend.showMessage("Wrong Value", "Threshold value must either be a number between (1 and 254) or -1")
+            return
+        
         operator_type =str(self.LoGOpText.currentText()).replace(" ","")
-        kernel_size = int(self.LoGKerText.text())
-        threshold = int(self.LoGThreshText.text())
-
-        if kernel_size%2==0:
-            print("kernel size must be odd number")
-            return 
+        kernel_size = int(self.LoGKerText.currentText())
+        
 
         image = Backend.imageToSKImage(pilImage.convert("L"))
         new_image = np.zeros(image.shape)

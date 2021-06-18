@@ -16,19 +16,25 @@ class MainUI():
         self.styleTextBoxPath = QtWidgets.QLineEdit()
         self.styleLabelPath = QtWidgets.QLabel("&Path:")
 
+        
+
         #press Alt+P to activate the browse textbox
         self.styleLabelPath.setBuddy(self.styleTextBoxPath)
 
         #Browse button and action referencing the getImageFile function
         self.browseButton = QtWidgets.QPushButton("Browse")
+        self.loadButton = QtWidgets.QPushButton("Load")
         self.browseButton.setDefault(True)
-        self.browseButton.clicked.connect(self.getImageFile)
+        self.loadButton.setDefault(True)
+        self.browseButton.clicked.connect(self.getImagePath)
+        self.loadButton.clicked.connect(self.getImageFile)
 
         #horizontal layout on top
         self.topLayout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.LeftToRight)
         self.topLayout.addWidget(self.styleLabelPath)
         self.topLayout.addWidget(self.styleTextBoxPath)
         self.topLayout.addWidget(self.browseButton)
+        self.topLayout.addWidget(self.loadButton)
 
         #Image Controls
         #self.pixmapImageOriginal = QtGui.QPixmap()
@@ -73,9 +79,9 @@ class MainUI():
         #self.labelOriginalImage.setScaledContents(True)
 
         #This is a sample for converting the original image to a grayscale one
-        self.grayButton = QtWidgets.QPushButton("To Gray")
-        self.grayButton.setDefault(True)
-        self.grayButton.clicked.connect(self.toGray)
+        # self.grayButton = QtWidgets.QPushButton("To Gray")
+        # self.grayButton.setDefault(True)
+        # self.grayButton.clicked.connect(self.toGray)
 
         self.histRowLabel = QtWidgets.QLabel("Histograms")
         self.histButton = QtWidgets.QPushButton("Histogram")
@@ -105,8 +111,8 @@ class MainUI():
         self.LoGOpLayout.addWidget(self.LoGOpText)
 
         self.LoGKerLabel = QtWidgets.QLabel("Kernel Size:")        
-        self.LoGKerText = QtWidgets.QLineEdit()
-        self.LoGKerText.setText("3")
+        self.LoGKerText = QtWidgets.QComboBox()
+        self.LoGKerText.addItems(["1","3","5","7","9","11","13","15","17","19","21"])
         self.LoGKerLayout = QtWidgets.QHBoxLayout()
         self.LoGKerLayout.addWidget(self.LoGKerLabel)
         self.LoGKerLayout.addWidget(self.LoGKerText)
