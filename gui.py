@@ -1,306 +1,225 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import pyqtgraph as pg
+import os
 
 
 class MainUI():
+    #Creating, Initializing, and organizing controls of the application
     def setupGUI(self, MainWindow):
         #Setting title and size of spplication window
         MainWindow.setWindowTitle("Image Processing Project - Group 3")
         MainWindow.resize(800, 800)
 
+        #Getting current path and changing icons
         icon = QtGui.QIcon()
-        #icon.addPixmap(QtGui.QPixmap("path"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.curr_dir = os.path.dirname(os.path.realpath(__file__))
+        icon_path = self.curr_dir + '/icon.png'
+        icon.addPixmap(QtGui.QPixmap(icon_path), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(icon)
 
-        #Textbox containing the path
+        ##Controls Definition Start
         self.styleTextBoxPath = QtWidgets.QLineEdit()
-        self.styleLabelPath = QtWidgets.QLabel("&Path:")
-
-        
-
-        #press Alt+P to activate the browse textbox
-        self.styleLabelPath.setBuddy(self.styleTextBoxPath)
-
-        #Browse button and action referencing the getImageFile function
+        self.styleLabelPath = QtWidgets.QLabel("Path:")
         self.browseButton = QtWidgets.QPushButton("Browse")
         self.loadButton = QtWidgets.QPushButton("Load")
+        self.topLayout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.LeftToRight)
+        self.labelOriginalImage = QtWidgets.QLabel()
+        self.labelModifiedImage = QtWidgets.QLabel()
+        self.middleGroupBox = QtWidgets.QGroupBox()
+        self.middleLayout = QtWidgets.QGridLayout()
+        self.modifiedRowLabel = QtWidgets.QLabel("Modified Image")
+        self.originalButton = QtWidgets.QPushButton("Reset Modified Image")
+        self.periodicRowLabel = QtWidgets.QLabel("Periodic Noise")
+        self.periodicLabel = QtWidgets.QLabel("Factor:     ")
+        self.periodicText = QtWidgets.QLineEdit()
+        self.periodicLayout = QtWidgets.QHBoxLayout()
+        self.periodicButton = QtWidgets.QPushButton("Add Noise / Remove with Notch filter")
+        self.periodic2Button = QtWidgets.QPushButton("Add Noise / Remove with Mask")
+        self.histRowLabel = QtWidgets.QLabel("Histograms")
+        self.histButton = QtWidgets.QPushButton("Histogram")
+        self.equalizedHistButton = QtWidgets.QPushButton("Equalized Histogram")
+        self.spRowLabel = QtWidgets.QLabel("Salt and Pepper")
+        self.spNoiseButton = QtWidgets.QPushButton("Add Salt and Pepper")
+        self.spFixButton = QtWidgets.QPushButton("Fix Salt and Pepper")
+        self.LoGOpLabel = QtWidgets.QLabel("Operator Type:")
+        self.LoGOpText = QtWidgets.QComboBox()
+        self.LoGOpLayout = QtWidgets.QHBoxLayout()
+        self.LoGKerLabel = QtWidgets.QLabel("Kernel Size:")
+        self.LoGKerText = QtWidgets.QComboBox()
+        self.LoGKerLayout = QtWidgets.QHBoxLayout()
+        self.LoGausRowLabel = QtWidgets.QLabel("Laplace Of Gaussian")
+        self.LoGThreshLabel = QtWidgets.QLabel("Threshold:")
+        self.LoGThreshText = QtWidgets.QLineEdit()
+        self.LoGThreshLayout = QtWidgets.QHBoxLayout()
+        self.LoGButton = QtWidgets.QPushButton("Show Laplace of Gaussian")
+        self.LapRowLabel = QtWidgets.QLabel("Laplace")
+        self.LapOpLabel = QtWidgets.QLabel("Operator Type:")
+        self.LapOpText = QtWidgets.QComboBox()
+        self.LapOpLayout = QtWidgets.QHBoxLayout()
+        self.LapThreshLabel = QtWidgets.QLabel("Threshold:")
+        self.LapThreshText = QtWidgets.QLineEdit()
+        self.LapThreshLayout = QtWidgets.QHBoxLayout()
+        self.LaplaceButton = QtWidgets.QPushButton("Show Laplace")
+        self.sobelRowLabel = QtWidgets.QLabel("Sobel Edge")
+        self.sobelLabel = QtWidgets.QLabel("Threshold:")
+        self.sobelText = QtWidgets.QLineEdit()
+        self.sobelLayout = QtWidgets.QHBoxLayout()
+        self.sobelEdgeButton = QtWidgets.QPushButton("Show Sobel Edge")
+        self.sobelAlgRowLabel = QtWidgets.QLabel("Sobel Algorithm")
+        self.sobelAlgDegreeLabel = QtWidgets.QLabel("Degree:           ")
+        self.sobelAlgDegreeText = QtWidgets.QLineEdit()
+        self.sobelAlgDegreeLayout = QtWidgets.QHBoxLayout()
+        self.sobelAlgThreshLabel = QtWidgets.QLabel("Threshold:")
+        self.sobelAlgThreshText = QtWidgets.QLineEdit()
+        self.sobelAlgThreshLayout = QtWidgets.QHBoxLayout()
+        self.sobelAlgorithmButton = QtWidgets.QPushButton("Show Sobel Algorithm")
+        self.saveButton = QtWidgets.QPushButton("Save")
+        self.bottomLayout = QtWidgets.QGridLayout()
+        self.qPal = QtGui.QPalette()
+        self.buFont=QtGui.QFont()
+        self.appLayout = QtWidgets.QGridLayout()#Main Layout of the app
+        ##Controls Definition End
+
+        
+        #Enable Button Controls 
         self.browseButton.setDefault(True)
         self.loadButton.setDefault(True)
+        self.originalButton.setDefault(True)
+        self.periodicButton.setDefault(True)
+        self.periodic2Button.setDefault(True)
+        self.histButton.setDefault(True)
+        self.equalizedHistButton.setDefault(True)
+        self.spNoiseButton.setDefault(True)
+        self.spFixButton.setDefault(True)
+        self.LoGButton.setDefault(True)
+        self.LaplaceButton.setDefault(True)
+        self.sobelEdgeButton.setDefault(True)
+        self.sobelAlgorithmButton.setDefault(True)
+        self.saveButton.setDefault(True)
+
+
+        #Setting Default values for controls
+        self.labelOriginalImage.setPixmap(QtGui.QPixmap())
+        self.labelModifiedImage.setPixmap(QtGui.QPixmap())
+        self.periodicText.setText("0.1")
+        self.LoGOpText.addItems(["eight fields","four fields"])
+        self.LoGKerText.addItems(["1","3","5","7","9","11","13","15","17","19","21"])
+        self.LoGThreshText.setText("-1")
+        self.LapOpText.addItems(["eight fields","four fields"])
+        self.LapThreshText.setText("-1")
+        self.sobelText.setText("-1")
+        self.sobelAlgDegreeText.setText("0")
+        self.sobelAlgThreshText.setText("-1")
+        self.qPal.setColor(QtGui.QPalette.WindowText, QtGui.QColor("red"))
+        self.buFont.setBold(True)
+        self.buFont.setUnderline(True)
+
+
+        #Connect Buttons to methods
         self.browseButton.clicked.connect(self.getImagePath)
         self.loadButton.clicked.connect(self.getImageFile)
+        self.originalButton.clicked.connect(self.toOriginal)
+        self.periodicButton.clicked.connect(self.toPeriodic)
+        self.periodic2Button.clicked.connect(self.toPeriodic2)
+        self.histButton.clicked.connect(self.getHist)
+        self.equalizedHistButton.clicked.connect(self.showEquHistogram)
+        self.spNoiseButton.clicked.connect(self.addSaltAndPepper)
+        self.spFixButton.clicked.connect(self.fixSaltAndPepper)
+        self.LoGButton.clicked.connect(self.showLapOfGaus)
+        self.LaplaceButton.clicked.connect(self.showLaplace)
+        self.sobelEdgeButton.clicked.connect(self.showSobelEdge)
+        self.sobelAlgorithmButton.clicked.connect(self.showSobelAlgorithm)
+        self.saveButton.clicked.connect(self.saveImage)
 
-        #horizontal layout on top
-        self.topLayout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.LeftToRight)
+
+        #Combining Controls in lesser Layout containers (Row Containers)
+        self.periodicLayout.addWidget(self.periodicLabel)
+        self.periodicLayout.addWidget(self.periodicText)
+        self.LoGOpLayout.addWidget(self.LoGOpLabel)
+        self.LoGOpLayout.addWidget(self.LoGOpText)
+        self.LoGKerLayout.addWidget(self.LoGKerLabel)
+        self.LoGKerLayout.addWidget(self.LoGKerText)
+        self.LoGThreshLayout.addWidget(self.LoGThreshLabel)
+        self.LoGThreshLayout.addWidget(self.LoGThreshText)
+        self.LapOpLayout.addWidget(self.LapOpLabel)
+        self.LapOpLayout.addWidget(self.LapOpText)
+        self.LapThreshLayout.addWidget(self.LapThreshLabel)
+        self.LapThreshLayout.addWidget(self.LapThreshText)
+        self.sobelLayout.addWidget(self.sobelLabel)
+        self.sobelLayout.addWidget(self.sobelText)
+        self.sobelAlgDegreeLayout.addWidget(self.sobelAlgDegreeLabel)
+        self.sobelAlgDegreeLayout.addWidget(self.sobelAlgDegreeText)
+        self.sobelAlgThreshLayout.addWidget(self.sobelAlgThreshLabel)
+        self.sobelAlgThreshLayout.addWidget(self.sobelAlgThreshText)
+
+        
+        #Adding controls and rows into main containers; top, middle, and bottom
+        #Top
         self.topLayout.addWidget(self.styleLabelPath)
         self.topLayout.addWidget(self.styleTextBoxPath)
         self.topLayout.addWidget(self.browseButton)
         self.topLayout.addWidget(self.loadButton)
-
-        #Image Controls
-        #self.pixmapImageOriginal = QtGui.QPixmap()
-        #self.pixmapImageModified = QtGui.QPixmap()
-
-        #Label container for images
-        self.labelOriginalImage = QtWidgets.QLabel()
-        self.labelOriginalImage.setPixmap(QtGui.QPixmap())
-
-        self.labelModifiedImage = QtWidgets.QLabel()
-        self.labelModifiedImage.setPixmap(QtGui.QPixmap())
-
-        
-        self.middleGroupBox = QtWidgets.QGroupBox()
-        self.middleLayout = QtWidgets.QGridLayout()
+        #Middle
         self.middleGroupBox.setLayout(self.middleLayout)
+        #Bottom
+        self.bottomLayout.addWidget(self.histRowLabel,0,0)
+        self.bottomLayout.addWidget(self.histButton, 0, 3)
+        self.bottomLayout.addWidget(self.equalizedHistButton,0,4)
+        self.bottomLayout.addWidget(self.spRowLabel,1,0)
+        self.bottomLayout.addWidget(self.spNoiseButton,1,3)
+        self.bottomLayout.addWidget(self.spFixButton,1,4)
+        self.bottomLayout.addWidget(self.sobelRowLabel,2,0)
+        self.bottomLayout.addLayout(self.sobelLayout,2,1)
+        self.bottomLayout.addWidget(self.sobelEdgeButton,2,4)
+        self.bottomLayout.addWidget(self.sobelAlgRowLabel,3,0)
+        self.bottomLayout.addLayout(self.sobelAlgThreshLayout,3,1)
+        self.bottomLayout.addLayout(self.sobelAlgDegreeLayout,3,2)
+        self.bottomLayout.addWidget(self.sobelAlgorithmButton,3,4)
+        self.bottomLayout.addWidget(self.LapRowLabel,4,0)
+        self.bottomLayout.addLayout(self.LapThreshLayout,4,1)
+        self.bottomLayout.addLayout(self.LapOpLayout,4,2)
+        self.bottomLayout.addWidget(self.LaplaceButton,4,4)
+        self.bottomLayout.addWidget(self.LoGausRowLabel,5,0)
+        self.bottomLayout.addLayout(self.LoGThreshLayout,5,1)
+        self.bottomLayout.addLayout(self.LoGOpLayout,5,2)
+        self.bottomLayout.addLayout(self.LoGKerLayout,5,3)
+        self.bottomLayout.addWidget(self.LoGButton,5,4)
+        self.bottomLayout.addWidget(self.periodicRowLabel,6,0)
+        self.bottomLayout.addLayout(self.periodicLayout,6,1)
+        self.bottomLayout.addWidget(self.periodicButton,6,3)
+        self.bottomLayout.addWidget(self.periodic2Button,6,4)
+        self.bottomLayout.addWidget(self.modifiedRowLabel,7,0)
+        self.bottomLayout.addWidget(self.originalButton,7,3)
+        self.bottomLayout.addWidget(self.saveButton,7,4)
 
-
-
-        self.modifiedRowLabel = QtWidgets.QLabel("Modified Image")
-        self.originalButton = QtWidgets.QPushButton("Reset Modified Image")
-        self.originalButton.setDefault(True)
-        self.originalButton.clicked.connect(self.toOriginal)
-
-        self.periodicRowLabel = QtWidgets.QLabel("Periodic Noise")        
-        self.periodicLabel = QtWidgets.QLabel("Factor:     ")        
-        self.periodicText = QtWidgets.QLineEdit()
-        #self.periodicText.setMaximumWidth(100);
-        self.periodicText.setText("0.1")
-        self.periodicLayout = QtWidgets.QHBoxLayout()
-        self.periodicLayout.addWidget(self.periodicLabel)
-        self.periodicLayout.addWidget(self.periodicText)
+        #Setting Row headers
+        self.setTitle(self.sobelRowLabel, self.buFont, self.qPal)
+        self.setTitle(self.sobelAlgRowLabel, self.buFont, self.qPal)
+        self.setTitle(self.LapRowLabel, self.buFont, self.qPal)
+        self.setTitle(self.LoGausRowLabel, self.buFont, self.qPal)
+        self.setTitle(self.periodicRowLabel, self.buFont, self.qPal)
+        self.setTitle(self.spRowLabel, self.buFont, self.qPal)
+        self.setTitle(self.modifiedRowLabel, self.buFont, self.qPal)
+        self.setTitle(self.histRowLabel, self.buFont, self.qPal)
         
-        self.periodicButton = QtWidgets.QPushButton("Add Noise / Remove with Notch filter")
-        self.periodicButton.setDefault(True)
-        self.periodicButton.clicked.connect(self.toPeriodic)
+        #Making columns even in width (except for the first/header column)
+        self.bottomLayout.setColumnStretch(1,1)
+        self.bottomLayout.setColumnStretch(2,1)
+        self.bottomLayout.setColumnStretch(3,1)
+        self.bottomLayout.setColumnStretch(4,1)
 
-        self.periodic2Button = QtWidgets.QPushButton("Add Noise / Remove with Mask")
-        self.periodic2Button.setDefault(True)
-        self.periodic2Button.clicked.connect(self.toPeriodic2)
+        #Placing main layouts on the app layout
+        self.appLayout.addLayout(self.topLayout, 0, 0, 1, 0, QtCore.Qt.AlignmentFlag.AlignHCenter|QtCore.Qt.AlignmentFlag.AlignTop)
+        self.appLayout.addWidget(self.middleGroupBox, 1, 0, 1, 0)
+        self.appLayout.addLayout(self.bottomLayout, 2, 0, 1, QtCore.Qt.AlignmentFlag.AlignHCenter|QtCore.Qt.AlignmentFlag.AlignBottom)
 
-        #self.labelOriginalImage.setScaledContents(True)
-
-        #This is a sample for converting the original image to a grayscale one
-        # self.grayButton = QtWidgets.QPushButton("To Gray")
-        # self.grayButton.setDefault(True)
-        # self.grayButton.clicked.connect(self.toGray)
-
-        self.histRowLabel = QtWidgets.QLabel("Histograms")
-        self.histButton = QtWidgets.QPushButton("Histogram")
-        self.histButton.setDefault(True)
-        self.histButton.clicked.connect(self.getHist)
-
-        self.equalizedHistButton = QtWidgets.QPushButton("Equalized Histogram")
-        self.equalizedHistButton.setDefault(True)
-        self.equalizedHistButton.clicked.connect(self.showEquHistogram)
-
-
-        self.spRowLabel = QtWidgets.QLabel("Salt and Pepper")
-        self.spNoiseButton = QtWidgets.QPushButton("Add Salt and Pepper")
-        self.spNoiseButton.setDefault(True)
-        self.spNoiseButton.clicked.connect(self.addSaltAndPepper)
-
-        self.spFixButton = QtWidgets.QPushButton("Fix Salt and Pepper")
-        self.spFixButton.setDefault(True)
-        self.spFixButton.clicked.connect(self.fixSaltAndPepper)
-
-        #operator_type="eightfields",kernel_size=3,threshold=-1
-        self.LoGOpLabel = QtWidgets.QLabel("Operator Type:")
-        self.LoGOpText = QtWidgets.QComboBox()
-        self.LoGOpText.addItems(["eight fields","four fields"])
-        self.LoGOpLayout = QtWidgets.QHBoxLayout()
-        self.LoGOpLayout.addWidget(self.LoGOpLabel)
-        self.LoGOpLayout.addWidget(self.LoGOpText)
-
-        self.LoGKerLabel = QtWidgets.QLabel("Kernel Size:")        
-        self.LoGKerText = QtWidgets.QComboBox()
-        self.LoGKerText.addItems(["1","3","5","7","9","11","13","15","17","19","21"])
-        self.LoGKerLayout = QtWidgets.QHBoxLayout()
-        self.LoGKerLayout.addWidget(self.LoGKerLabel)
-        self.LoGKerLayout.addWidget(self.LoGKerText)
-
-        self.LoGausRowLabel = QtWidgets.QLabel("Laplace Of Gaussian")        
-        self.LoGThreshLabel = QtWidgets.QLabel("Threshold:")        
-        self.LoGThreshText = QtWidgets.QLineEdit()
-        self.LoGThreshText.setText("-1")
-        self.LoGThreshLayout = QtWidgets.QHBoxLayout()
-        self.LoGThreshLayout.addWidget(self.LoGThreshLabel)
-        self.LoGThreshLayout.addWidget(self.LoGThreshText)
-
-        self.LoGButton = QtWidgets.QPushButton("Show Laplace of Gaussian")
-        self.LoGButton.setDefault(True)
-        self.LoGButton.clicked.connect(self.showLapOfGaus)
-
-        #operator_type="eightfields",threshold=10
-        self.LapRowLabel = QtWidgets.QLabel("Laplace")        
-        self.LapOpLabel = QtWidgets.QLabel("Operator Type:")
-        self.LapOpText = QtWidgets.QComboBox()
-        self.LapOpText.addItems(["eight fields","four fields"])
-        self.LapOpLayout = QtWidgets.QHBoxLayout()
-        self.LapOpLayout.addWidget(self.LapOpLabel)
-        self.LapOpLayout.addWidget(self.LapOpText)
-
-        self.LapThreshLabel = QtWidgets.QLabel("Threshold:")
-        self.LapThreshText = QtWidgets.QLineEdit()
-        self.LapThreshText.setText("10")
-        self.LapThreshLayout = QtWidgets.QHBoxLayout()
-        self.LapThreshLayout.addWidget(self.LapThreshLabel)
-        self.LapThreshLayout.addWidget(self.LapThreshText)
-
-        self.LaplaceButton = QtWidgets.QPushButton("Show Laplace")
-        self.LaplaceButton.setDefault(True)
-        self.LaplaceButton.clicked.connect(self.showLaplace)
-
-
-        self.sobelRowLabel = QtWidgets.QLabel("Sobel Edge")
-        self.sobelLabel = QtWidgets.QLabel("Threshold:")        
-        self.sobelText = QtWidgets.QLineEdit()
-        self.sobelText.setText("200")
-        self.sobelLayout = QtWidgets.QHBoxLayout()
-        self.sobelLayout.addWidget(self.sobelLabel)
-        self.sobelLayout.addWidget(self.sobelText)
+    #Set font and pallette
+    def setTitle(self, qLabel, qFont, qPal):
+        qLabel.setFont(qFont)
+        qLabel.setPalette(qPal)
         
-        self.sobelEdgeButton = QtWidgets.QPushButton("Show Sobel Edge")
-        self.sobelEdgeButton.setDefault(True)
-        self.sobelEdgeButton.clicked.connect(self.showSobelEdge)
-        
-
-        self.sobelAlgRowLabel = QtWidgets.QLabel("Sobel Algorithm")
-        self.sobelAlgDegreeLabel = QtWidgets.QLabel("Degree:           ")        
-        self.sobelAlgDegreeText = QtWidgets.QLineEdit()
-        self.sobelAlgDegreeText.setText("0")
-        self.sobelAlgDegreeLayout = QtWidgets.QHBoxLayout()
-        self.sobelAlgDegreeLayout.addWidget(self.sobelAlgDegreeLabel)
-        self.sobelAlgDegreeLayout.addWidget(self.sobelAlgDegreeText)
-
-        self.sobelAlgThreshLabel = QtWidgets.QLabel("Threshold:")
-        self.sobelAlgThreshText = QtWidgets.QLineEdit()
-        self.sobelAlgThreshText.setText("-1")
-        self.sobelAlgThreshLayout = QtWidgets.QHBoxLayout()
-        self.sobelAlgThreshLayout.addWidget(self.sobelAlgThreshLabel)
-        self.sobelAlgThreshLayout.addWidget(self.sobelAlgThreshText)
-
-        self.sobelAlgorithmButton = QtWidgets.QPushButton("Show Sobel Algorithm")
-        self.sobelAlgorithmButton.setDefault(True)
-        self.sobelAlgorithmButton.clicked.connect(self.showSobelAlgorithm)
-
-        #self.fourierSpecButton = QtWidgets.QPushButton("Show Fourier")
-        #self.fourierSpecButton.setDefault(True)
-        #self.fourierSpecButton.clicked.connect(self.showFourier)
-
-        self.saveButton = QtWidgets.QPushButton("Save")
-        self.saveButton.setDefault(True)
-        self.saveButton.clicked.connect(self.saveImage)
-        
-
-
-        #self.aboveBottomGroupBox = QtWidgets.QGroupBox()
-        self.aboveBottomLayout = QtWidgets.QGridLayout()
-
-        
-        
-        
-        qPal = QtGui.QPalette()
-        qPal.setColor(QtGui.QPalette.WindowText, QtGui.QColor("red"))
-        buFont=QtGui.QFont()
-        buFont.setBold(True)
-        buFont.setUnderline(True)
-
-        self.sobelRowLabel.setFont(buFont)
-        self.sobelRowLabel.setPalette(qPal)
-        self.sobelAlgRowLabel.setFont(buFont)
-        self.sobelAlgRowLabel.setPalette(qPal)
-        self.LapRowLabel.setFont(buFont)
-        self.LapRowLabel.setPalette(qPal)
-        self.LoGausRowLabel.setFont(buFont)
-        self.LoGausRowLabel.setPalette(qPal)
-        self.periodicRowLabel.setFont(buFont)
-        self.periodicRowLabel.setPalette(qPal)
-        self.spRowLabel.setFont(buFont)
-        self.spRowLabel.setPalette(qPal)
-        self.modifiedRowLabel.setFont(buFont)
-        self.modifiedRowLabel.setPalette(qPal)
-        self.histRowLabel.setFont(buFont)
-        self.histRowLabel.setPalette(qPal)
-
-
-        self.aboveBottomLayout.addWidget(self.histRowLabel,0,0)
-        self.aboveBottomLayout.addWidget(self.histButton, 0, 3)
-        self.aboveBottomLayout.addWidget(self.equalizedHistButton,0,4)
-
-        self.aboveBottomLayout.addWidget(self.spRowLabel,1,0)
-        self.aboveBottomLayout.addWidget(self.spNoiseButton,1,3)
-        self.aboveBottomLayout.addWidget(self.spFixButton,1,4)
-
-        self.aboveBottomLayout.addWidget(self.sobelRowLabel,2,0)
-        self.aboveBottomLayout.addLayout(self.sobelLayout,2,1)
-        #self.aboveBottomLayout.addWidget(self.sobelText,1,2)
-        self.aboveBottomLayout.addWidget(self.sobelEdgeButton,2,4)
-
-        self.aboveBottomLayout.addWidget(self.sobelAlgRowLabel,3,0)
-        self.aboveBottomLayout.addLayout(self.sobelAlgThreshLayout,3,1)
-        #self.aboveBottomLayout.addWidget(self.sobelAlgThreshText,2,2)
-        self.aboveBottomLayout.addLayout(self.sobelAlgDegreeLayout,3,2)
-        #self.aboveBottomLayout.addWidget(self.sobelAlgDegreeText,2,4)
-        self.aboveBottomLayout.addWidget(self.sobelAlgorithmButton,3,4)
-        
-        self.aboveBottomLayout.addWidget(self.LapRowLabel,4,0)
-        self.aboveBottomLayout.addLayout(self.LapThreshLayout,4,1)
-        #self.aboveBottomLayout.addWidget(self.LapThreshText,3,2)
-        self.aboveBottomLayout.addLayout(self.LapOpLayout,4,2)
-        #self.aboveBottomLayout.addWidget(self.LapOpText,3,4)
-        self.aboveBottomLayout.addWidget(self.LaplaceButton,4,4)
-        
-        self.aboveBottomLayout.addWidget(self.LoGausRowLabel,5,0)
-        self.aboveBottomLayout.addLayout(self.LoGThreshLayout,5,1)
-        #self.aboveBottomLayout.addWidget(self.LoGThreshText,4,2)
-        self.aboveBottomLayout.addLayout(self.LoGOpLayout,5,2)
-        #self.aboveBottomLayout.addWidget(self.LoGOpText,4,4)
-        self.aboveBottomLayout.addLayout(self.LoGKerLayout,5,3)
-        #self.aboveBottomLayout.addWidget(self.LoGKerText,4,6)
-        self.aboveBottomLayout.addWidget(self.LoGButton,5,4)
-        
-        self.aboveBottomLayout.addWidget(self.periodicRowLabel,6,0)
-        self.aboveBottomLayout.addLayout(self.periodicLayout,6,1)
-        #self.aboveBottomLayout.addWidget(self.periodicText,5,2)
-        self.aboveBottomLayout.addWidget(self.periodicButton,6,3)
-        self.aboveBottomLayout.addWidget(self.periodic2Button,6,4)
-
-        self.aboveBottomLayout.addWidget(self.modifiedRowLabel,7,0)
-        self.aboveBottomLayout.addWidget(self.originalButton,7,3)#,1,2)
-        self.aboveBottomLayout.addWidget(self.saveButton,7,4)#,1,2)
-        
-        #self.aboveBottomLayout.addWidget(self.fourierSpecButton,2,2)
-        
-        
-        
-        #self.aboveBottomGroupBox.setLayout(self.aboveBottomLayout)
-
-
-
-        
-        #self.bottomLayout = QtWidgets.QVBoxLayout()
-        #self.aboveBottomLayout.addWidget(self.saveButton,3,3)
-
-        #Making columns even in width
-        #self.aboveBottomLayout.setColumnStretch(0,1)
-        self.aboveBottomLayout.setColumnStretch(1,1)
-        self.aboveBottomLayout.setColumnStretch(2,1)
-        self.aboveBottomLayout.setColumnStretch(3,1)
-        self.aboveBottomLayout.setColumnStretch(4,1)
-        # self.aboveBottomLayout.setColumnStretch(5,1)
-        # self.aboveBottomLayout.setColumnStretch(6,1)
-        # self.aboveBottomLayout.setColumnStretch(7,1)
-
-
-        self.mainLayout = QtWidgets.QGridLayout()
-        #addLayout(self, QLayout, int, int, alignment: Union[Qt.Alignment, Qt.AlignmentFlag] = Qt.Alignment())
-        #addWidget(QWidget *widget, int fromRow, int fromColumn, int rowSpan, int columnSpan, Qt::Alignment alignment = Qt::Alignment())
-        #addWidget(self, QWidget, int (Row), int (Column), alignment: Union[Qt.Alignment, Qt.AlignmentFlag] = Qt.Alignment())
-        self.mainLayout.addLayout(self.topLayout, 0, 0, 1, 0, QtCore.Qt.AlignmentFlag.AlignHCenter|QtCore.Qt.AlignmentFlag.AlignTop)
-        self.mainLayout.addWidget(self.middleGroupBox, 1, 0, 1, 0)
-        self.mainLayout.addLayout(self.aboveBottomLayout, 2, 0, 1, QtCore.Qt.AlignmentFlag.AlignHCenter|QtCore.Qt.AlignmentFlag.AlignBottom)
-        #self.mainLayout.addLayout(self.bottomLayout, 3, 0, 1, QtCore.Qt.AlignmentFlag.AlignHCenter|QtCore.Qt.AlignmentFlag.AlignBottom)
-
-    def showPlot(self):
+    #Show image and fourrier spectrum on the app screen (Will be run after an image is chosen)
+    def activateMiddleParts(self):
         self.originalGraphicWidget = pg.GraphicsLayoutWidget()
         self.originalPlot = self.originalGraphicWidget.addPlot(title='2D Original Spectrum', row=0, col=1)
         self.originalPlotImage = pg.ImageItem()
@@ -317,3 +236,5 @@ class MainUI():
         self.middleLayout.addWidget(self.labelModifiedImage,1,0,1,2)
         self.middleLayout.addWidget(self.modifiedGraphicWidget,1,2,1,2)
         self.middleGroupBox.setLayout(self.middleLayout)
+
+    

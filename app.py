@@ -2,13 +2,11 @@ import PIL
 from PyQt5 import QtCore
 import numpy as np
 from gui import MainUI
-from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-
 from backend import Backend
-from PIL import Image, ImageQt
+from PIL import Image
 import matplotlib.pyplot as plt
 
 #Main Window Class
@@ -18,16 +16,12 @@ class ImageProcessingWindow(QDialog, MainUI):
         
         #Getting controls for both main window and extra window from the gui.py file
         self.setupGUI(self)
-        self.setLayout(self.mainLayout)
+        self.setLayout(self.appLayout)
         #Disable question mark on top, enable minimize, maximize, and close buttons
         self.setWindowFlags(QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint | 
         QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowMaximizeButtonHint| QtCore.Qt.WindowMinimizeButtonHint)
 
-
-    
-
-    
-
+    #Load images into image controls
     def loadImages(self):
         #Converting image to qImage and showing it in the image control
         qImage1 = Backend.imageToQImage(Backend.currImage)
@@ -39,7 +33,7 @@ class ImageProcessingWindow(QDialog, MainUI):
         self.labelModifiedImage.setScaledContents(True)
 
         #Show plot images after an image is loaded
-        self.showPlot()
+        self.activateMiddleParts()
         im_ori_arr = np.asarray(Backend.currImage.getdata()).reshape(Backend.currImage.size[1], Backend.currImage.size[0], -1)
         im_orig = np.mean(im_ori_arr, axis=2) / 255
         im_fft_shift = Backend.get_fft_shift(im_orig)
@@ -53,7 +47,7 @@ class ImageProcessingWindow(QDialog, MainUI):
         #An image has been loaded successfully
         Backend.default_image = False
 
-        
+    #Read and place image path in the textbox (also loads the images)
     def getImagePath(self):
         fileName, _ = QFileDialog.getOpenFileName(self, 'Open File', QDir.rootPath() , '*.png *.jpg *.jpeg')
 
@@ -66,7 +60,6 @@ class ImageProcessingWindow(QDialog, MainUI):
             
 
     def getImageFile(self):
-
         #If the filename is not empty
         if self.styleTextBoxPath.text():
             #Reading into an image object and showing it in the image control
@@ -81,7 +74,7 @@ class ImageProcessingWindow(QDialog, MainUI):
         else:
             Backend.showMessage("Empty Path","Kindly fill in the file path or use the Browse button to select a file.")
 
-            
+    #Call functions from backend (Start)
     def toPeriodic(self):
         if Backend.default_image == True:
             Backend.noImageSelected()
@@ -89,8 +82,6 @@ class ImageProcessingWindow(QDialog, MainUI):
             
         Backend.periodic_noise(self, Backend.currImage)
 
-        #set image control to the converted image
-        self.loadImages()
 
     def toPeriodic2(self):
         if Backend.default_image == True:
@@ -101,8 +92,6 @@ class ImageProcessingWindow(QDialog, MainUI):
 
         #set image control to the converted image
         self.loadImages()
-
-
 
     def toOriginal(self, skip=False):
         if Backend.default_image == True and skip == False:
@@ -128,7 +117,9 @@ class ImageProcessingWindow(QDialog, MainUI):
         #call gray transformation method
         Backend.transformToGray(Backend)
 
-        grayArray = np.array(Backend.imgToGray(Backend.currImage))
+        grayArray = np.array(Backend.currImage)
+        
+        plt.close("all")#Close existing plots before creating a new one
         #Create the histogram from gray image
         plt.hist(grayArray.ravel(), bins=100)
         plt.show()
@@ -150,9 +141,6 @@ class ImageProcessingWindow(QDialog, MainUI):
         Backend.modifiedImage = Backend.fix_sp_noise(Backend.modifiedImage)
         self.loadImages()
 
-    def showFourier(self):
-        Backend.fourierTransform(Backend.modifiedImage)
-
     def showEquHistogram(self):
         if Backend.default_image == True:
             Backend.noImageSelected()
@@ -165,19 +153,10 @@ class ImageProcessingWindow(QDialog, MainUI):
             Backend.noImageSelected()
             return
             
-        plt.subplot(111)
-        #plt.title("loG 3x3")
+        plt.close("all")#Close existing plots before creating a new one
+        plt.plot(111)
         plt.imshow(Backend.LaplaceOfGaussianAlogrithm(self, Backend.currImage),cmap="gray")
         plt.axis("off")
-        # plt.subplot(132)
-        # plt.title("loG 5x5")
-        # plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=5),cmap="gray")
-        # plt.axis("off")
-        # plt.subplot(133)
-
-        # plt.title("loG 7x7")
-        # plt.imshow(Backend.LaplaceOfGaussianAlogrithm(Backend.currImage,operator_type="eightfields",kernel_size=17),cmap="gray")
-        # plt.axis("off")
         plt.show()
 
     def showLaplace(self):
@@ -185,32 +164,11 @@ class ImageProcessingWindow(QDialog, MainUI):
             Backend.noImageSelected()
             return
             
-        plt.subplot(111)#141)
-        #plt.title("thresh = " + str(thresholdVal))
+        plt.close("all")#Close existing plots before creating a new one
+        plt.plot(111)#141)
 
-        plt.imshow(Backend.LaplaceAlogrithm(self, Backend.currImage),cmap="gray")#,operator_type="eightfields",threshold=thresholdVal),cmap="gray")
+        plt.imshow(Backend.LaplaceAlogrithm(self, Backend.currImage),cmap="gray")
         plt.axis("off")
-
-        # plt.subplot(142)
-
-        # plt.title("thresh =127")
-
-        # plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=127),cmap="gray")
-        # plt.axis("off")
-
-        # plt.subplot(143)
-
-        # plt.title("thresh =200")
-
-        # plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields",threshold=200),cmap="gray")
-        # plt.axis("off")
-        # plt.subplot(144)
-
-        # plt.title("defualt")
-
-        # plt.imshow(Backend.LaplaceAlogrithm(Backend.currImage,operator_type="eightfields"),cmap="gray")
-        # plt.axis("off")
-
         plt.show()
 
 
@@ -219,31 +177,11 @@ class ImageProcessingWindow(QDialog, MainUI):
             Backend.noImageSelected()
             return
             
-        plt.subplot(111)
-
-        #plt.title("thresh=10")
+        plt.close("all")#Close existing plots before creating a new one
+        plt.plot(111)
 
         plt.imshow(Backend.Sobel_edge_detector(self, Backend.currImage),cmap="gray")
         plt.axis("off")
-        # plt.subplot(142)
-        # plt.title("thresh=127")
-        # plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=127),cmap="gray")
-
-        # plt.axis("off")
-
-        # plt.subplot(143)
-        # plt.title("thresh=200")
-
-        # plt.imshow(Backend.Sobel_edge_detector(Backend.currImage,threshold=200),cmap="gray")
-        # plt.axis("off")
-
-        # plt.subplot(144)
-        # plt.title("defualt")
-
-        # plt.imshow(Backend.Sobel_edge_detector(Backend.currImage),cmap="gray")
-        # plt.axis("off")
-
-
         plt.show()
 
     def showSobelAlgorithm(self):
@@ -252,35 +190,15 @@ class ImageProcessingWindow(QDialog, MainUI):
             Backend.noImageSelected()
             return
             
-        plt.subplot(111)
-
-        #plt.title("degree=0")
-
+        plt.close("all")#Close existing plots before creating a new one
+        plt.plot(111)
         plt.imshow(Backend.SobelAlogrithm(self,Backend.currImage),cmap="gray")
         plt.axis("off")
-        # plt.subplot(142)
-        # plt.title("degree=45")
-        # plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=45),cmap="gray")
-
-        # plt.axis("off")
-
-        # plt.subplot(143)
-        # plt.title("degree=90")
-
-        # plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=90),cmap="gray")
-        # plt.axis("off")
-
-        # plt.subplot(144)
-        # plt.title("degree=135")
-
-        # plt.imshow(Backend.SobelAlogrithm(Backend.currImage,degree=135),cmap="gray")
-        # plt.axis("off")
-
-
         plt.show()
-    
         
-
+    #Call functions from backend (End)
+        
+    #Save Modified Image
     def saveImage(self):
         if Backend.default_image == True:
             Backend.noImageSelected()

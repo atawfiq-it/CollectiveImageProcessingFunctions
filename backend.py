@@ -1,6 +1,5 @@
 from PIL import Image, ImageQt
 from PyQt5 import QtWidgets
-from PyQt5.QtGui import QImage
 from matplotlib import pyplot as plt
 import numpy as np
 import random
@@ -8,62 +7,59 @@ import cv2
 from scipy import fft, signal
 from scipy.ndimage import rotate
 
-
-
 class Backend():
     #Creating a one-pixel image for initializing the currImage
     default_image = True
     mode = 'RGB'
     size = (1, 1)
-    image_size = 240
     color = (0, 0, 0)
     currImage = Image.new(mode, size, color)
     modifiedImage = Image.new(mode, size, color)
-    histImage = Image.new(mode, size, color)
+    
+    image_size = 240#Used for scaling loaded images
     clicks = 0
     clicksData = np.zeros((2, 2))
     
-    
-
+    #Shows a message to inform the user of a problem
     def showMessage(title, message):
         msg = QtWidgets.QMessageBox()
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.setIcon(QtWidgets.QMessageBox.Information)
         msg.setText(message)
-        #self.msg.setInformativeText("This is additional information")
         msg.setWindowTitle(title)
         msg.exec_()
 
+    #This default message is used at the clicks of all image modification buttons to ask the user for an image
     def noImageSelected():
         Backend.showMessage("Missing Image","No image has been loaded yet. Please select and load an image in order to use this function.")
 
-
+    #Convert current image to grayscale
     def transformToGray(self):
-        #Convert current image to grayscale
         self.modifiedImage = self.currImage.convert('L')
 
-    def imgToGray(img):
-        imgGray = img.convert('LA')
-        return imgGray
-    
+    #Make the image usable by PyQt controls
     def imageToQImage(pilImage):
         qImage = ImageQt.ImageQt(pilImage)
         return qImage
 
+    #Convert the image to a numpy array to be usable by scipy
     def imageToSKImage(pilImage):
         skImage = np.array(pilImage)
         return skImage
 
+    #Produce Fourrier Shift
     def get_fft_shift(im):
         im_fft = fft.fft2((im).astype(float))
         return fft.fftshift( im_fft )
 
+    #Ploot an image
     def plot_image(fig, title, img, row, col, cell):
         ax = fig.add_subplot(row, col, cell)
         plt.imshow(img, cmap='gray')
         plt.axis('off')
         ax.set_title(title)
 
+    #Plot Frequency
     def plot_freq(fig, title, freq, row, col, cell, ylim=False):
         ax = fig.add_subplot(row, col, cell)
         log_freq = (20*np.log10( 0.1 + freq))
@@ -75,6 +71,7 @@ class Backend():
             plt.tight_layout()
         plt.show()
 
+    #Get user click locations for the periodic noise
     def getUserClick(event):        
         if Backend.clicks == 0 or Backend.clicks == 1:
             Backend.clicksData[Backend.clicks, 0] = int(event.xdata)
@@ -105,6 +102,7 @@ class Backend():
             Backend.plot_freq(fig3, 'Recovered Image Spectrum', im_recovered_fft_shift, 1, 2, 2)
             
     
+    #Produce Periodic noise (first button)
     def periodic_noise_common(self, pilImage):
         try:
             factor = float(self.periodicText.text())
@@ -145,6 +143,7 @@ class Backend():
         Backend.plot_freq(fig2, 'Diff between Noisy and Original Spectrum', fft_diff, 1, 1, 1, True)
         return fig2
 
+    #Produce Periodic noise (second button)
     def periodic2_noise(self, pilImage):
         fig2 = Backend.periodic_noise_common(self, pilImage)
         fig2.canvas.mpl_connect('button_press_event', Backend.getUserClick)
@@ -170,10 +169,9 @@ class Backend():
         Backend.plot_freq(fig3, 'Recovered Image Spectrum', im_recovered_fft_shift, 1, 2, 2)
 
 
+    #Adding Salt and Pepper noise
     def add_sp_noise(pilImage):
-    #Adding Salt and Pepper
-
-        #Convert pillow image to open-cv
+        #Convert pillow image to numpy
         img = Backend.imageToSKImage(pilImage)
         # Getting the dimensions of the image
         row , col = img.shape[:2]#Error at :-1
@@ -215,6 +213,7 @@ class Backend():
         median_blur= cv2.medianBlur(Backend.imageToSKImage(pilImage.convert("L")), 3)
         return Image.fromarray(median_blur)
 
+        #takes too long
         #Using median filter to fix salt and pepper noise
         data = Backend.imageToSKImage(pilImage.convert("L"))
 
@@ -244,29 +243,12 @@ class Backend():
                 imgResult = Image.fromarray(data_final)
         return imgResult
 
-    def fourierTransform(pilImage):
-        image1 = Backend.imageToSKImage(pilImage.convert("L"))
-        image1_spectrum = np.fft.fft2(image1)
-        image1_spectrum_centered=np.fft.ifftshift(image1_spectrum)
-        
-        # src = cv2.imread("C:/Users/User/Pictures/L424502.jpg")
-        #plt.figure(figsize=(24, 16), constrained_layout=False)
-        # image1 = cv2.cvtColor(src, cv2.COLOR_BGR2RGB)
-        # plt.subplot(121), plt.imshow(image1), plt.title("Original Image")
-
-        plt.subplot(111), plt.imshow(np.log(1+np.abs(image1_spectrum_centered)), "gray"), plt.title("Spectrum")
-        plt.show()
-
+    #Show equalized histogram and equalized image
     def equalizedHistogram(pilImage):
+        plt.close("all")#Close existing plots before creating a new one
         img = Backend.imageToSKImage(pilImage.convert("L"))
 
-
         equalized_image = cv2.equalizeHist(img)
-        #plt.figure(figsize=(20, 16), constrained_layout=False)
-        #plt.subplot(1,2,1),plt.hist(equalized_image.ravel(),bins=100),plt.title("Equalized histogram")
-        
-        
-        #plt.subplot(1,2,2),plt.imshow(equalized_image,"gray", aspect='auto'),plt.title("Equalized Image")
 
         max_range = list(range(1, 257))#1 to 256
         eq_hist, bins = np.histogram(equalized_image.ravel(), bins=max_range)
@@ -286,7 +268,6 @@ class Backend():
 
     #Sobel Operator , return the operator, can rotate it by a specific degree
     def SobelOperator(degree=0):
-
         SOBEL_OPERATOR = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
         rotated_operator=rotate(SOBEL_OPERATOR, angle=degree)
         return rotated_operator
@@ -310,8 +291,6 @@ class Backend():
         except:
             Backend.showMessage("Wrong Value", "Degree value must be a number between 0 and 360")
             return
-            
-        
 
         new_image = np.zeros(image.shape)    #place holder
         kernel= Backend.SobelOperator(degree)#kernel generation
