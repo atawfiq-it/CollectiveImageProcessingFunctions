@@ -60,19 +60,26 @@ class ImageProcessingWindow(QDialog, MainUI):
             
 
     def getImageFile(self):
-        #If the filename is not empty
-        if self.styleTextBoxPath.text():
-            #Reading into an image object and showing it in the image control
-            try:
-                Backend.currImage = Image.open(self.styleTextBoxPath.text()).convert("L")
-                #Copy original image to the modified
-                self.toOriginal(True)#Skip Check of existing image
-            except FileNotFoundError:
-                Backend.showMessage("Incorrect Path","The provided file path is not correct. Please provide a valid file path.")
-            except PIL.UnidentifiedImageError:
-                Backend.showMessage("Incorrect Type","The provided file can not be interpreted as a valid image. Please provide a valid path to an image file.")
-        else:
+        imgPath = self.styleTextBoxPath.text().upper()
+        if len(imgPath) == 0:
             Backend.showMessage("Empty Path","Kindly fill in the file path or use the Browse button to select a file.")
+            return
+        elif not imgPath.endswith(".PNG") and not imgPath.endswith(".JPG") and not imgPath.endswith(".JPEG"):
+            Backend.showMessage("Incorrect Type","The provided path must be to a PNG/JPG/JPEG image file. Please provide a valid path to an image file.")
+            return
+
+        #Reading into an image object and showing it in the image control
+        try:
+            Backend.currImage = Image.open(self.styleTextBoxPath.text()).convert("L")
+            #Copy original image to the modified
+            self.toOriginal(True)#Skip Check of existing image
+        except FileNotFoundError:
+            Backend.showMessage("Incorrect Path","The provided file path is not correct. Please provide a valid file path.")
+            return
+        except PIL.UnidentifiedImageError:
+            Backend.showMessage("Incorrect Type","The provided file can not be interpreted as a valid image. Please provide a valid path to an image file.")
+            return
+            
 
     #Call functions from backend (Start)
     def toPeriodic(self):
