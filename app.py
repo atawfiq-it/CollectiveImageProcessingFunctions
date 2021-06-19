@@ -147,6 +147,7 @@ class ImageProcessingWindow(QDialog, MainUI):
             return
             
         Backend.equalizedHistogram(Backend.modifiedImage)
+        self.loadImages()
 
     def showLapOfGaus(self):
         if Backend.default_image == True:

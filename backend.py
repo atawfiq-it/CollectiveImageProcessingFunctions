@@ -47,6 +47,10 @@ class Backend():
         skImage = np.array(pilImage)
         return skImage
 
+    def npArrToImage(npArr):
+        imgResult = Image.fromarray(npArr)
+        return imgResult
+
     #Produce Fourrier Shift
     def get_fft_shift(im):
         im_fft = fft.fft2((im).astype(float))
@@ -206,16 +210,16 @@ class Backend():
             # Color that pixel to black
             img[y_coord][x_coord] = 0
         
-        imgResult = Image.fromarray(img)
+        imgResult = Backend.npArrToImage(img)
         return imgResult
     
     def fix_sp_noise(pilImage, filter_size=3):
-        median_blur= cv2.medianBlur(Backend.imageToSKImage(pilImage.convert("L")), 3)
+        median_blur= cv2.medianBlur(Backend.imageToSKImage(pilImage), 3)
         return Image.fromarray(median_blur)
 
         #takes too long
         #Using median filter to fix salt and pepper noise
-        data = Backend.imageToSKImage(pilImage.convert("L"))
+        data = Backend.imageToSKImage(pilImage)
 
         temp = []
         indexer = filter_size // 2
@@ -246,12 +250,14 @@ class Backend():
     #Show equalized histogram and equalized image
     def equalizedHistogram(pilImage):
         plt.close("all")#Close existing plots before creating a new one
-        img = Backend.imageToSKImage(pilImage.convert("L"))
+        img = Backend.imageToSKImage(pilImage)
 
         equalized_image = cv2.equalizeHist(img)
-
+        Backend.modifiedImage = Backend.npArrToImage(equalized_image)
+        
         max_range = list(range(1, 257))#1 to 256
         eq_hist, bins = np.histogram(equalized_image.ravel(), bins=max_range)
+        #plt.plot(eq_hist)
         fig, [ax1, ax2] = plt.subplots(1, 2, figsize=(15,5))
         ax1.bar(max_range[:-1], eq_hist)#1 to 255 .. hist_bars was defined here
         #The next code does not show well on a plot
@@ -275,7 +281,7 @@ class Backend():
     #Sobel Algorithm uses the previous function to get the edges with the degree 
     #Sobel parameters ,Degree and threshold
     def SobelAlogrithm(self, pilImage):
-        image = Backend.imageToSKImage(pilImage.convert("L"))
+        image = Backend.imageToSKImage(pilImage)
         try:
             threshold = int(self.sobelAlgThreshText.text())
             if threshold > 254 or threshold < -1 or threshold == 0:
@@ -306,7 +312,7 @@ class Backend():
     #Sobel Edge detection , the dafulat one x and y direction ,you can play with the treshold
     def Sobel_edge_detector(self,pilImage):
         
-        image = Backend.imageToSKImage(pilImage.convert("L"))
+        image = Backend.imageToSKImage(pilImage)
         try:
             threshold = int(self.sobelText.text())
             if threshold > 254 or threshold < -1 or threshold == 0:
@@ -346,7 +352,7 @@ class Backend():
 
     #laplace edge detection , you can change the threshold  and the operator type
     def LaplaceAlogrithm(self,pilImage):
-        image = Backend.imageToSKImage(pilImage.convert("L"))
+        image = Backend.imageToSKImage(pilImage)
         try:
             threshold = int(self.LapThreshText.text())
             if threshold > 254 or threshold < -1 or threshold == 0:
@@ -385,7 +391,7 @@ class Backend():
         kernel_size = int(self.LoGKerText.currentText())
         
 
-        image = Backend.imageToSKImage(pilImage.convert("L"))
+        image = Backend.imageToSKImage(pilImage)
         new_image = np.zeros(image.shape)
         blur = cv2.GaussianBlur(image,(kernel_size,kernel_size),0)
         blur = cv2.copyMakeBorder(blur, 1, 1, 1, 1, cv2.BORDER_DEFAULT)
