@@ -17,6 +17,6 @@ The main code is separated into 4 files: **backend.py**, **gui.py**, **app.py**,
   [Ahmed Kamel](https://github.com/falcongreatly)<br/>
   [Ahmed Tawfiq](https://github.com/atawfiq-it) <br/>
   [Amr Alsayed](https://github.com/@amr11695)<br/>
-  **Kareem Elattar**<br/>
+  [Kareem Elattar](https://github.com/kareemelattar86)<br/>
   [Zeyad Ezzat](https://github.com/zeyad3ezzat)<br/>
  
