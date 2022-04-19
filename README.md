@@ -1,4 +1,4 @@
-# imageProcessingProjectG3
+# Image Processing Project - Group 3
 Code Description:<br/>
      The main code is separated into 4 files: backend.py, gui.py, app.py, and start.py<br/>
         1- The backend file contains global variables that are used in the other files alongside functions that transforms a parameter and returns the result back to the calling function.<br/>
@@ -15,9 +15,9 @@ Application Setup:<br/>
      <br/><br/>
      Thank you for your time. <br/>
      Group 3 <br/>
-        Ahmed Kamel     1910017 <br/>
-        Ahmed M Tawfiq  1910027 <br/>
-        Amr Elsayed     202003007 <br/>
-        Kareem Elattar  182036 <br/>
-        Zeyad Ezzat     202003115 <br/>
+        Ahmed M Kamel            1910017 <br/>
+        Ahmed M Tawfiq           1910027 <br/>
+        Amr Alsayed Mohamed      202003007 <br/>
+        Kareem Elattar           182036 <br/>
+        Zeyad Ezzat              202003115 <br/>
  <br/>
