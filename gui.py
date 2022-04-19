@@ -7,7 +7,7 @@ class MainUI():
     #Creating, Initializing, and organizing controls of the application
     def setupGUI(self, MainWindow):
         #Setting title and size of spplication window
-        MainWindow.setWindowTitle("Image Processing Project - Group 3")
+        MainWindow.setWindowTitle("Collective Image Processing Functions")
         MainWindow.resize(800, 800)
 
         #Getting current path and changing icons
