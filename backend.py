@@ -281,13 +281,12 @@ class Backend():
     #Sobel Algorithm uses the previous function to get the edges with the degree 
     #Sobel parameters ,Degree and threshold
     def SobelAlogrithm(self, pilImage):
-        image = Backend.imageToSKImage(pilImage)
         try:
             threshold = int(self.sobelAlgThreshText.text())
-            if threshold > 254 or threshold < -1 or threshold == 0:
+            if threshold > 254 or threshold < 0:
                 raise Exception()
         except:
-            Backend.showMessage("Wrong Value", "Threshold value must either be a number between (1 and 254) or -1")
+            Backend.showMessage("Wrong Value", "Threshold value must be a number between 0 and 254")
             return
 
         try:
@@ -298,16 +297,16 @@ class Backend():
             Backend.showMessage("Wrong Value", "Degree value must be a number between 0 and 360")
             return
 
+        image = Backend.imageToSKImage(pilImage)
         new_image = np.zeros(image.shape)    #place holder
+        
         kernel= Backend.SobelOperator(degree)#kernel generation
         new_image = signal.convolve2d(image, kernel, boundary='symm', mode='same')#covloution
         new_image = np.abs(new_image)#absolute value
         new_image = 255 - new_image*(255 / np.max(new_image)) #normalization
-        if threshold==-1:
-            return new_image.astype(np.uint8)
-        else:
-            ret,th1 = cv2.threshold(new_image,threshold,255,cv2.THRESH_BINARY) #less than threshold set to 0 otherwise set to 255
-            return th1
+        
+        ret,th1 = cv2.threshold(new_image,255-threshold,255,cv2.THRESH_BINARY_INV) #less than threshold set to 0 otherwise set to 255
+        return th1
 
     #Sobel Edge detection , the dafulat one x and y direction ,you can play with the treshold
     def Sobel_edge_detector(self,pilImage):
@@ -315,10 +314,10 @@ class Backend():
         image = Backend.imageToSKImage(pilImage)
         try:
             threshold = int(self.sobelText.text())
-            if threshold > 254 or threshold < -1 or threshold == 0:
+            if threshold > 254 or threshold < 0:
                 raise Exception()
         except:
-            Backend.showMessage("Wrong Value", "Threshold value must either be a number between (1 and 254) or -1")
+            Backend.showMessage("Wrong Value", "Threshold value must be a number between 0 and 254")
             return
             
         #place holders
@@ -334,10 +333,8 @@ class Backend():
         new_image1 = np.sqrt(new_image1*new_image1+new_image2*new_image2)
         #normalization
         new_image1 = 255 - new_image1*(255 / np.max(new_image1))
-        if threshold==-1:
-            return new_image1.astype(np.uint8)
-        else:
-            ret,th1 = cv2.threshold(new_image1,threshold,255,cv2.THRESH_BINARY) #less than threshold set to 0 otherwise set to 255
+        
+        ret,th1 = cv2.threshold(new_image1,255-threshold,255,cv2.THRESH_BINARY_INV) #less than threshold set to 0 otherwise set to 255
         return th1
 
     #return the laplace operator , two most recommended filters 
@@ -355,10 +352,10 @@ class Backend():
         image = Backend.imageToSKImage(pilImage)
         try:
             threshold = int(self.LapThreshText.text())
-            if threshold > 254 or threshold < -1 or threshold == 0:
+            if threshold > 254 or threshold < 0:
                 raise Exception()
         except:
-            Backend.showMessage("Wrong Value", "Threshold value must either be a number between (1 and 254) or -1")
+            Backend.showMessage("Wrong Value", "Threshold value must be a number between 0 and 254")
             return
         
         operator_type = str(self.LapOpText.currentText()).replace(" ","")
@@ -370,10 +367,7 @@ class Backend():
         new_image = np.abs(new_image)
         new_image = 255-new_image * (255 / np.max(image))
         
-        if threshold==-1:
-            return new_image.astype(np.uint8)
-        else:
-            ret,th1 = cv2.threshold(new_image,threshold,255,cv2.THRESH_BINARY) #less than threshold set to 0 otherwise set to 255
+        ret,th1 = cv2.threshold(new_image,255-threshold,255,cv2.THRESH_BINARY_INV) #less than threshold set to 0 otherwise set to 255
         return th1
 
     #laplace of gaussian , you can change the smoothing kernel , operator type and threshold 
@@ -381,10 +375,10 @@ class Backend():
 
         try:
             threshold = int(self.LoGThreshText.text())
-            if threshold > 254 or threshold < -1 or threshold == 0:
+            if threshold > 254 or threshold < 0:
                 raise Exception()
         except:
-            Backend.showMessage("Wrong Value", "Threshold value must either be a number between (1 and 254) or -1")
+            Backend.showMessage("Wrong Value", "Threshold value must be a number between 0 and 254")
             return
         
         operator_type =str(self.LoGOpText.currentText()).replace(" ","")
@@ -401,8 +395,5 @@ class Backend():
 
         new_image = 255-new_image * (255 / np.max(image))
         # print(np.max(new_image))
-        if threshold==-1:
-            return new_image.astype(np.uint8)
-        else:
-            ret,th1 = cv2.threshold(new_image,threshold,255,cv2.THRESH_BINARY) #less than threshold set to 0 otherwise set to 255
+        ret,th1 = cv2.threshold(new_image,255-threshold,255,cv2.THRESH_BINARY_INV) #less than threshold set to 0 otherwise set to 255
         return th1
