@@ -1,3 +1,4 @@
+import os
 import PIL
 from PyQt5 import QtCore
 import numpy as np
@@ -49,7 +50,7 @@ class ImageProcessingWindow(QDialog, MainUI):
 
     #Read and place image path in the textbox (also loads the images)
     def getImagePath(self):
-        fileName, _ = QFileDialog.getOpenFileName(self, 'Open File', QDir.rootPath() , '*.png *.jpg *.jpeg')
+        fileName, _ = QFileDialog.getOpenFileName(self, 'Open File', os.path.dirname(os.path.realpath(__file__)) , '*.png *.jpg *.jpeg')
 
         #If the filename is not empty
         if fileName:
@@ -101,11 +102,13 @@ class ImageProcessingWindow(QDialog, MainUI):
         self.loadImages()
 
     def toOriginal(self, skip=False):
+        #Check if an image has been loaded
         if Backend.default_image == True and skip == False:
             Backend.noImageSelected()
             return
-
+        #Copy image from original to modified
         Backend.modifiedImage = Backend.currImage.copy()
+        #Reload image
         self.loadImages()
 
     def toGray(self):
@@ -211,7 +214,7 @@ class ImageProcessingWindow(QDialog, MainUI):
         if Backend.default_image == True:
             Backend.noImageSelected()
             return
-            
+        #Open save file dialog
         fileName, _ = QFileDialog.getSaveFileName(self, 'Save File', QDir.rootPath() , '*.png *.jpg *.jpeg')
 
         #If the filename is not empty

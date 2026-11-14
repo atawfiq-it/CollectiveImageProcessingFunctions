@@ -7,7 +7,7 @@ class MainUI():
     #Creating, Initializing, and organizing controls of the application
     def setupGUI(self, MainWindow):
         #Setting title and size of spplication window
-        MainWindow.setWindowTitle("Image Processing Project - Group 3")
+        MainWindow.setWindowTitle("Collective Image Processing Functions")
         MainWindow.resize(800, 800)
 
         #Getting current path and changing icons
@@ -103,13 +103,13 @@ class MainUI():
         self.labelModifiedImage.setPixmap(QtGui.QPixmap())
         self.periodicText.setText("0.1")
         self.LoGOpText.addItems(["eight fields","four fields"])
-        self.LoGKerText.addItems(["1","3","5","7","9","11","13","15","17","19","21"])
-        self.LoGThreshText.setText("-1")
+        self.LoGKerText.addItems(["3","5","7","9","11","13","15","17","19","21","23","25","27","29"])#kernel size
+        self.LoGThreshText.setText("10")
         self.LapOpText.addItems(["eight fields","four fields"])
-        self.LapThreshText.setText("-1")
-        self.sobelText.setText("-1")
+        self.LapThreshText.setText("10")
+        self.sobelText.setText("10")
         self.sobelAlgDegreeText.setText("0")
-        self.sobelAlgThreshText.setText("-1")
+        self.sobelAlgThreshText.setText("10")
         self.qPal.setColor(QtGui.QPalette.WindowText, QtGui.QColor("red"))
         self.buFont.setBold(True)
         self.buFont.setUnderline(True)
